@@ -7,6 +7,9 @@ export type Inputs = {
   format: string;
   audience: string;
   llm: string;
+  customNeed: string;   // <-- new free-text field
+};
+
 };
 
 export function assemblePrompt(i: Inputs): string {
