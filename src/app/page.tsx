@@ -1,3 +1,5 @@
+import React from "react";
+
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -263,7 +265,7 @@ export default function Home() {
   }
 
   // Builder blocks render map
-  const blockRenderers: Record<string, JSX.Element> = {
+const blockRenderers: Record<string, React.ReactNode> = {
     role: (
       <div className="mb-3">
         <div className="flex items-center justify-between">
