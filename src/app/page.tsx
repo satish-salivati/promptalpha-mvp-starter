@@ -392,7 +392,7 @@ export default function Home() {
                 <h2 className="font-semibold">Presets</h2>
                 <button onClick={savePreset} className="border px-2 py-1 rounded text-sm">Save current</button>
               </div>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search presets" className
+              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search presets" 
                          className="border rounded p-2 w-full mb-2"
 />
               <div className="space-y-2 mt-3 max-h-48 overflow-y-auto">
