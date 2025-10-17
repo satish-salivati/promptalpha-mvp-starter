@@ -253,7 +253,7 @@ export default function Home() {
     });
   }, [presets, search]);
 
-  const themeClass = dark ? "bg-gray-900
+
     const themeClass = dark ? "bg-gray-900 text-gray-100" : "bg-white text-gray-900";
   const cardClass = dark ? "bg-gray-800 border border-gray-700" : "bg-gray-50 border border-gray-200";
 
