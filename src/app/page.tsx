@@ -163,7 +163,7 @@ export default function Home() {
   }, [dark]);
 
   // Assembled prompt + segments
-  const segments: PromptSegment[] = useMemo(() => assemblePrompt(inputs, true), [inputs]);
+  const segments = useMemo(() => assemblePrompt(inputs, true) as PromptSegment[], [inputs]);
   const prompt: string = useMemo(() => assemblePrompt(inputs, false) as string, [inputs]);
   const wordCount = useMemo(() => prompt.trim().split(/\s+/).filter(Boolean).length, [prompt]);
 
