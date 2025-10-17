@@ -13,13 +13,6 @@ export const OBJECTIVES = [
   { value: "Brainstorm ideas", help: "Generate creative options" },
   { value: "Translate text", help: "Convert text into another language" },
 ];
-export const TASKS = [
-  { value: "Write a job description", help: "Generate a clear and compelling JD" },
-  { value: "Summarize a document", help: "Condense text into key points" },
-  { value: "Draft an email", help: "Compose a professional and concise email" },
-  { value: "Brainstorm ideas", help: "Produce creative options to choose from" },
-];
-
 export const TONES = [
   { value: "Formal", help: "Professional and structured" },
   { value: "Casual", help: "Friendly and conversational" },
