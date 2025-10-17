@@ -8,14 +8,16 @@ import { assemblePrompt, Inputs } from "../../lib/assemblePrompt";
 
 
 export default function Home() {
-  const [inputs, setInputs] = React.useState<Inputs>({
-    role: "",
-    task: "",
-    tone: "",
-    format: "",
-    audience: "",
-    llm: "",
-  });
+const [inputs, setInputs] = useState({
+  role: "",
+  task: "",
+  tone: "",
+  format: "",
+  audience: "",
+  llm: "",
+  customNeed: "",   // 👈 add this line
+});
+
   const [prompt, setPrompt] = React.useState("");
 
   function update<K extends keyof Inputs>(key: K, value: string) {
