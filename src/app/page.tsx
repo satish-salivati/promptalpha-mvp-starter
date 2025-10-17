@@ -4,6 +4,7 @@
 
 import React from "react";
 import { ROLES, TASKS, TONES, FORMATS, AUDIENCES, LLMS } from "../lib/options";
+import { assemblePrompt, Inputs } from "../lib/assemblePrompt";
 
 
 export default function Home() {
