@@ -36,10 +36,13 @@ function uid() {
 function serializeStateToQuery(i: Inputs) {
   const params = new URLSearchParams();
   Object.entries(i).forEach(([k, v]) => {
-    if (v) params.set(k, v);
+    if (v !== undefined && v !== null && v !== "") {
+      params.set(k, String(v)); // ✅ convert everything to a string
+    }
   });
   return `${location.origin}${location.pathname}?${params.toString()}`;
 }
+
 
 function parseQueryToState(): Partial<Inputs> {
   const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
