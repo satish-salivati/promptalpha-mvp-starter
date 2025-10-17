@@ -1,32 +1,70 @@
-// lib/assemblePrompt.ts
+// src/lib/assemblePrompt.ts
 
 export type Inputs = {
   role: string;
-  task: string;
+  objective: string;
   tone: string;
   format: string;
   audience: string;
   llm: string;
-  customNeed: string;
-  // Advanced toggles
-  seo: boolean;
-  citations: boolean;
-  structure: boolean;
-  maxWords: number;
+  customNeed?: string;
+  seo?: boolean;
+  citations?: boolean;
+  structure?: boolean;
+  maxWords?: number;
+  structureStyle?: string;
 };
 
-export function assemblePrompt(i: Inputs): string {
-  const lines = [
-    `You are ${i.role || "a professional"}.`,
-    `Your task is to ${i.task || "perform the requested action"} for ${i.audience || "the intended audience"}.`,
-    i.customNeed ? `The user specifically needs: ${i.customNeed}` : "",
-    `Write in a ${i.tone || "professional"} tone, formatted as ${i.format || "paragraph"}.`,
-    `Target LLM: ${i.llm || "a large language model"}.`,
-    i.structure ? `Structure the output with clear sections, headings, and bullet points where helpful.` : "",
-    i.seo ? `Incorporate SEO best practices: use descriptive headings, relevant keywords, and scannable formatting.` : "",
-    i.citations ? `Cite sources where applicable and include references or links when possible.` : "",
-    `Provide a clear, actionable, structured output. Avoid fluff. State assumptions if needed.`,
-  ];
+export type PromptSegment = {
+  label: string;
+  text: string;
+};
 
-  return lines.filter(Boolean).join("\n\n");
+function addSegment(
+  segments: PromptSegment[],
+  label: string,
+  text?: string | boolean | number
+) {
+  if (text === undefined || text === null || text === "" || text === false) return;
+  segments.push({ label, text: String(text) });
+}
+
+export function assemblePrompt(
+  inputs: Inputs,
+  asSegments = false
+): string | PromptSegment[] {
+  const segments: PromptSegment[] = [];
+
+  // Core intent
+  addSegment(segments, "Role", inputs.role ? `Act as ${inputs.role}` : undefined);
+  addSegment(segments, "Objective", inputs.objective);
+  addSegment(segments, "Tone", inputs.tone ? `Use a ${inputs.tone} tone` : undefined);
+  addSegment(segments, "Format", inputs.format ? `Respond in ${inputs.format}` : undefined);
+  addSegment(segments, "Audience", inputs.audience ? `For ${inputs.audience}` : undefined);
+
+  // Custom need
+  addSegment(segments, "Custom need", inputs.customNeed);
+
+  // Constraints / advanced
+  addSegment(segments, "SEO", inputs.seo ? "Optimize for SEO" : undefined);
+  addSegment(segments, "Citations", inputs.citations ? "Include citations or references when relevant" : undefined);
+  addSegment(
+    segments,
+    "Structure",
+    inputs.structure ? `Structure the answer as ${inputs.structureStyle || "bullet list"}` : undefined
+  );
+  addSegment(
+    segments,
+    "Max words",
+    inputs.maxWords && inputs.maxWords > 0 ? `Limit to ${inputs.maxWords} words` : undefined
+  );
+
+  // Model hint (non-binding)
+  addSegment(segments, "LLM", inputs.llm ? `Use ${inputs.llm}` : undefined);
+
+  if (asSegments) return segments;
+
+  // Build final prompt string
+  const lines = segments.map((s) => `${s.label}: ${s.text}`);
+  return lines.join("\n");
 }
