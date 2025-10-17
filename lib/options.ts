@@ -6,7 +6,13 @@ export const ROLES = [
   { value: "HR Specialist", help: "Highlight people, culture, and compliance" },
   { value: "Marketing Lead", help: "Stress positioning, messaging, and audience reach" },
 ];
-
+export const OBJECTIVES = [
+  { value: "Summarize an article", help: "Condense text into key points" },
+  { value: "Write an email draft", help: "Generate a professional email" },
+  { value: "Explain a concept", help: "Break down complex ideas simply" },
+  { value: "Brainstorm ideas", help: "Generate creative options" },
+  { value: "Translate text", help: "Convert text into another language" },
+];
 export const TASKS = [
   { value: "Write a job description", help: "Generate a clear and compelling JD" },
   { value: "Summarize a document", help: "Condense text into key points" },
