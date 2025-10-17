@@ -7,20 +7,26 @@ export type Inputs = {
   format: string;
   audience: string;
   llm: string;
-  customNeed: string;   // <-- new free-text field
+  customNeed: string;
+  // Advanced toggles
+  seo: boolean;
+  citations: boolean;
+  structure: boolean;
+  maxWords: number;
 };
 
 export function assemblePrompt(i: Inputs): string {
   const lines = [
     `You are ${i.role || "a professional"}.`,
     `Your task is to ${i.task || "perform the requested action"} for ${i.audience || "the intended audience"}.`,
-    // 👇 This line integrates the free-text input if provided
     i.customNeed ? `The user specifically needs: ${i.customNeed}` : "",
-    `Write in a ${i.tone || "neutral"} tone, formatted as ${i.format || "paragraph"}.`,
+    `Write in a ${i.tone || "professional"} tone, formatted as ${i.format || "paragraph"}.`,
     `Target LLM: ${i.llm || "a large language model"}.`,
+    i.structure ? `Structure the output with clear sections, headings, and bullet points where helpful.` : "",
+    i.seo ? `Incorporate SEO best practices: use descriptive headings, relevant keywords, and scannable formatting.` : "",
+    i.citations ? `Cite sources where applicable and include references or links when possible.` : "",
     `Provide a clear, actionable, structured output. Avoid fluff. State assumptions if needed.`,
   ];
 
-  // Removes empty strings if customNeed is blank
   return lines.filter(Boolean).join("\n\n");
 }
