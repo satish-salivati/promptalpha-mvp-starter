@@ -20,51 +20,46 @@ export type PromptSegment = {
   text: string;
 };
 
-function addSegment(
-  segments: PromptSegment[],
-  label: string,
-  text?: string | boolean | number
-) {
-  if (text === undefined || text === null || text === "" || text === false) return;
-  segments.push({ label, text: String(text) });
-}
-
+// Overloads: TS will infer correct return type
+export function assemblePrompt(inputs: Inputs, asSegments: true): PromptSegment[];
+export function assemblePrompt(inputs: Inputs, asSegments?: false): string;
 export function assemblePrompt(
   inputs: Inputs,
   asSegments = false
 ): string | PromptSegment[] {
   const segments: PromptSegment[] = [];
 
+  function add(label: string, text?: string | boolean | number) {
+    if (text === undefined || text === null || text === "" || text === false) return;
+    segments.push({ label, text: String(text) });
+  }
+
   // Core intent
-  addSegment(segments, "Role", inputs.role ? `Act as ${inputs.role}` : undefined);
-  addSegment(segments, "Objective", inputs.objective);
-  addSegment(segments, "Tone", inputs.tone ? `Use a ${inputs.tone} tone` : undefined);
-  addSegment(segments, "Format", inputs.format ? `Respond in ${inputs.format}` : undefined);
-  addSegment(segments, "Audience", inputs.audience ? `For ${inputs.audience}` : undefined);
+  add("Role", inputs.role ? `Act as ${inputs.role}` : undefined);
+  add("Objective", inputs.objective);
+  add("Tone", inputs.tone ? `Use a ${inputs.tone} tone` : undefined);
+  add("Format", inputs.format ? `Respond in ${inputs.format}` : undefined);
+  add("Audience", inputs.audience ? `For ${inputs.audience}` : undefined);
 
   // Custom need
-  addSegment(segments, "Custom need", inputs.customNeed);
+  add("Custom need", inputs.customNeed);
 
-  // Constraints / advanced
-  addSegment(segments, "SEO", inputs.seo ? "Optimize for SEO" : undefined);
-  addSegment(segments, "Citations", inputs.citations ? "Include citations or references when relevant" : undefined);
-  addSegment(
-    segments,
+  // Constraints
+  add("SEO", inputs.seo ? "Optimize for search engines" : undefined);
+  add("Citations", inputs.citations ? "Include references when relevant" : undefined);
+  add(
     "Structure",
-    inputs.structure ? `Structure the answer as ${inputs.structureStyle || "bullet list"}` : undefined
+    inputs.structure ? `Structure as ${inputs.structureStyle || "bullet list"}` : undefined
   );
-  addSegment(
-    segments,
+  add(
     "Max words",
     inputs.maxWords && inputs.maxWords > 0 ? `Limit to ${inputs.maxWords} words` : undefined
   );
 
-  // Model hint (non-binding)
-  addSegment(segments, "LLM", inputs.llm ? `Use ${inputs.llm}` : undefined);
+  // Model hint
+  add("LLM", inputs.llm ? `Use ${inputs.llm}` : undefined);
 
   if (asSegments) return segments;
 
-  // Build final prompt string
-  const lines = segments.map((s) => `${s.label}: ${s.text}`);
-  return lines.join("\n");
+  return segments.map((s) => `${s.label}: ${s.text}`).join("\n");
 }
