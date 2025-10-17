@@ -1,9 +1,11 @@
 "use client";
 
+"use client";
+
 import React from "react";
-// ✅ Fixed imports: using relative paths instead of "@/..."
-import { ROLES, TASKS, TONES, FORMATS, AUDIENCES, LLMS } from "./../lib/options";
-import { assemblePrompt, Inputs } from "./../lib/assemblePrompt";
+import { ROLES, TASKS, TONES, FORMATS, AUDIENCES, LLMS } from "../lib/options";
+import { assemblePrompt, Inputs } from "../lib/assemblePrompt";
+
 
 export default function Home() {
   const [inputs, setInputs] = React.useState<Inputs>({
