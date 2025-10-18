@@ -158,10 +158,12 @@ export default function Page() {
         alert("Something went wrong generating the prompt.");
         return;
       }
+          const data = await res.json();
+       setGeneratedPrompt(data.prompt || "");
+
       const data = await res.json();
       console.log("Generated prompt:", data);
-      alert("Prompt generated! Check console for details.");
-    } catch (err) {
+         } catch (err) {
       console.error(err);
       alert("Network error. Please try again.");
     }
