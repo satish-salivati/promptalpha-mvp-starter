@@ -1,4 +1,4 @@
-// src/lib/personaPresets.ts
+// lib/personaPresets.ts
 
 export const personaPresets = {
   "Content Creator": {
