@@ -1,23 +1,23 @@
 // src/lib/personaPresets.ts
 
-import { Inputs } from "./assemblePrompt";
-
-export const personaPresets: Record<string, Partial<Inputs>> = {
+export const personaPresets = {
   "Content Creator": {
     role: "Content Creator",
-    tone: "Conversational",
+    tone: "Friendly",
     format: "Paragraph",
     audience: "General Public",
     maxWords: 500,
+    structure: true,
     structureStyle: "Narrative",
   },
   "Marketer": {
     role: "Marketer",
     tone: "Persuasive",
-    format: "Ad Copy",
+    format: "Bullet list",
     audience: "Executives",
-    maxWords: 100,
-    structureStyle: "Hook - Value Prop - CTA",
+    maxWords: 120,
+    structure: true,
+    structureStyle: "Headline–Subhead",
   },
   "Product Manager": {
     role: "Product Manager",
@@ -32,6 +32,8 @@ export const personaPresets: Record<string, Partial<Inputs>> = {
     tone: "Educational",
     format: "Step-by-step instructions",
     audience: "Developers",
+    structure: true,
+    structureStyle: "User flow",
   },
   "Sales Team": {
     role: "Salesperson",
@@ -43,8 +45,8 @@ export const personaPresets: Record<string, Partial<Inputs>> = {
   "Educator": {
     role: "Educator",
     tone: "Educational",
-    format: "Lesson Plan",
-    audience: "Students",
+    format: "Step-by-step instructions",
+    audience: "Children",
     structure: true,
     structureStyle: "Lesson Outline",
   },
@@ -54,25 +56,32 @@ export const personaPresets: Record<string, Partial<Inputs>> = {
     format: "Paragraph",
     audience: "Academic",
     citations: true,
-    seo: false,
+    maxWords: 300,
+    structure: true,
+    structureStyle: "FAQ",
   },
   "Developer": {
     role: "Software Developer",
     tone: "Professional",
     format: "Code block",
     audience: "Developers",
+    structure: true,
+    structureStyle: "Step-by-step instructions",
   },
   "Recruiter / HR": {
     role: "Recruiter",
     tone: "Professional",
-    format: "Job Description",
+    format: "Paragraph",
     audience: "General Public",
+    structure: true,
+    structureStyle: "Bullet",
   },
   "Customer Support": {
     role: "Customer Support",
     tone: "Friendly",
     format: "Dialogue",
     audience: "General Public",
+    maxWords: 180,
   },
   "Legal / Compliance": {
     role: "Lawyer",
@@ -80,28 +89,35 @@ export const personaPresets: Record<string, Partial<Inputs>> = {
     format: "Paragraph",
     audience: "Executives",
     citations: true,
-    maxWords: 300,
+    maxWords: 250,
+    structure: true,
+    structureStyle: "Bullet",
   },
   "Non-native English User": {
     role: "General User",
-    tone: "Professional",
+    tone: "Educational",
     format: "Paragraph",
     audience: "General Public",
+    structure: true,
+    structureStyle: "Narrative",
   },
   "Entrepreneur / Startup": {
     role: "Entrepreneur",
     tone: "Persuasive",
-    format: "Pitch Deck Outline",
-    audience: "Investors",
+    format: "Bullet list",
+    audience: "Executives",
     structure: true,
+    structureStyle: "Headline–Subhead",
   },
   "Policy Analyst": {
     role: "Policy Analyst",
     tone: "Journalistic",
-    format: "Report",
+    format: "Paragraph",
     audience: "Executives",
     citations: true,
     maxWords: 400,
+    structure: true,
+    structureStyle: "Table",
   },
   "Creative Writer": {
     role: "Creative Writer",
@@ -109,5 +125,7 @@ export const personaPresets: Record<string, Partial<Inputs>> = {
     format: "Narrative",
     audience: "General Public",
     maxWords: 800,
+    structure: true,
+    structureStyle: "Narrative",
   },
-};
+} as const;
