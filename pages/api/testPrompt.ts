@@ -1,63 +1,79 @@
 // pages/api/testPrompt.ts
-
 import type { NextApiRequest, NextApiResponse } from "next";
 
-type Body = {
-  prompt: string;
-  userInput?: string;
-  llm?: string; // optional, e.g., "gpt-4o-mini" or "gpt-4o"
+type Payload = {
+  customNeed: string;
+  persona: string;
+  role: string;
+  audience?: string;
+  outputFormat?: string;
+  length?: string;
+  style?: string;
+  tone?: string;
+  constraints?: string;
+  advanced?: {
+    seoFriendly?: boolean;
+    includeReferences?: boolean;
+    structuredOutput?: boolean;
+    avoidPitfalls?: boolean;
+    complianceMode?: boolean;
+  };
 };
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { prompt, userInput = "", llm = "gpt-4o-mini" } = req.body as Body;
-
-  if (!process.env.OPENAI_API_KEY) {
-    return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
-  }
-  if (!prompt || typeof prompt !== "string") {
-    return res.status(400).json({ error: "Invalid prompt" });
-  }
-
-  const finalPrompt = `${prompt}\n\nUser input:\n${userInput}`.trim();
-
   try {
-    // Call OpenAI Responses API
-    const resp = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: llm,
-        input: finalPrompt,
-      }),
-    });
+    const body: Payload = req.body;
 
-    if (!resp.ok) {
-      const errText = await resp.text();
-      return res.status(resp.status).json({ error: errText || "OpenAI error" });
+    // Basic validation
+    if (!body?.customNeed) {
+      return res.status(400).json({ error: "customNeed is required" });
     }
 
-    const data = await resp.json();
+    // Build a draft prompt from the payload (you can customize this)
+    const lines: string[] = [];
 
-    // Safely extract text from the response
-    const output =
-      (data?.output_text as string) ||
-      (Array.isArray(data?.output) &&
-        data.output[0]?.content?.[0]?.text) ||
-      JSON.stringify(data);
+    lines.push(`You are acting as: ${body.role || "Assistant"}.`);
+    lines.push(`User context (My Role): ${body.persona || "Unknown"}.`);
+    lines.push(`Audience: ${body.audience || "General"}.`);
+    lines.push(`Output format: ${body.outputFormat || "Text"}.`);
+    lines.push(`Length: ${body.length || "Medium"}.`);
+    lines.push(`Style: ${body.style || "Persuasive"}.`);
+    lines.push(`Tone: ${body.tone || "Neutral"}.`);
+    lines.push("");
+    lines.push(`Task: ${body.customNeed}`);
+    if (body.constraints) {
+      lines.push("");
+      lines.push(`Constraints: ${body.constraints}`);
+    }
 
-    return res.status(200).json({ output });
-  } catch (e: any) {
-    return res.status(500).json({ error: e?.message || "Unknown error" });
+    // Advanced options
+    const adv = body.advanced || {};
+    const advNotes: string[] = [];
+    if (adv.seoFriendly) advNotes.push("Make it SEO-friendly with clear headings and keywords.");
+    if (adv.includeReferences) advNotes.push("Include credible references or sources where relevant.");
+    if (adv.structuredOutput) advNotes.push("Use a structured output with sections and subheadings.");
+    if (adv.avoidPitfalls) advNotes.push("Avoid jargon, fluff, and unsupported claims.");
+    if (adv.complianceMode) advNotes.push("Keep claims conservative and compliant.");
+
+    if (advNotes.length) {
+      lines.push("");
+      lines.push("Advanced instructions:");
+      advNotes.forEach((n) => lines.push(`- ${n}`));
+    }
+
+    const generatedPrompt = lines.join("\n");
+
+    return res.status(200).json({
+      success: true,
+      prompt: generatedPrompt,
+      echo: body,
+    });
+  } catch (err: any) {
+    console.error("testPrompt error:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 }
