@@ -13,6 +13,7 @@ export default function Page() {
   const [style, setStyle] = useState("Persuasive");
   const [tone, setTone] = useState("Confident");
   const [constraints, setConstraints] = useState("");
+  const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
 
   // Advanced toggles
   const [seoFriendly, setSeoFriendly] = useState(false);
