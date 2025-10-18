@@ -34,6 +34,10 @@ export default [
     eslintConfigPrettier, // ? https://github.com/prettier/eslint-config-prettier
         {
         rules: {
+            "newline-before-return": "off",
+            "@typescript-eslint/no-explicit-any": "off",
+            "@typescript-eslint/ban-ts-comment": "off",
+            "promise/catch-or-return": "off",
             'no-unused-vars': 'off',
             'react/react-in-jsx-scope': 'off',
             'react-hooks/exhaustive-deps': 'off',
