@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 export default function Page() {
-  // Core state
+  // State hooks
   const [customNeed, setCustomNeed] = useState("");
   const [myRole, setMyRole] = useState("Founder");
   const [aiRole, setAiRole] = useState("Copywriter");
@@ -13,7 +13,6 @@ export default function Page() {
   const [style, setStyle] = useState("Persuasive");
   const [tone, setTone] = useState("Confident");
   const [constraints, setConstraints] = useState("");
-  const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
 
   // Advanced toggles
   const [seoFriendly, setSeoFriendly] = useState(false);
@@ -21,6 +20,9 @@ export default function Page() {
   const [structuredOutput, setStructuredOutput] = useState(false);
   const [avoidPitfalls, setAvoidPitfalls] = useState(false);
   const [complianceMode, setComplianceMode] = useState(false);
+
+  // Generated prompt state
+  const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
 
   // Options
   const myRoleOptions = [
@@ -122,7 +124,7 @@ export default function Page() {
     "Urgent",
   ];
 
-  // API helpers
+  // Build payload
   function buildPayload() {
     return {
       customNeed,
@@ -144,34 +146,31 @@ export default function Page() {
     };
   }
 
+  // Handlers
   async function handleGeneratePrompt(e: React.FormEvent) {
     e.preventDefault();
     const payload = buildPayload();
 
-    try {
-      const res = await fetch("/api/testPrompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        alert("Something went wrong generating the prompt.");
-        return;
-      }
-          const data = await res.json();
-       setGeneratedPrompt(data.prompt || "");
-         console.log("Generated prompt:", data);
-         } catch (err) {
-      console.error(err);
-      alert("Network error. Please try again.");
+    const res = await fetch("/api/testPrompt", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      alert("Something went wrong generating the prompt.");
+      return;
     }
+
+    const data = await res.json();
+    setGeneratedPrompt(data.prompt || "");
   }
 
   async function handleSave() {
     const res = await fetch("/api/savePrompt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildPayload()),
+      body: JSON.stringify({ ...buildPayload(), generatedPrompt }),
     });
     alert(res.ok ? "Saved!" : "Save failed.");
   }
@@ -180,7 +179,7 @@ export default function Page() {
     const res = await fetch("/api/sharePrompt", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(buildPayload()),
+      body: JSON.stringify({ ...buildPayload(), generatedPrompt }),
     });
     const data = res.ok ? await res.json() : null;
     if (data?.url) {
@@ -191,26 +190,36 @@ export default function Page() {
     }
   }
 
-  function handleDownload() {
-    const payload = buildPayload();
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "text/plain" });
+  async function handleFeedback() {
+    const rating = prompt("Rate 1–5:");
+    const comments = prompt("Optional comments:");
+    if (!rating && !comments) return;
+    const res = await fetch("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating, comments, context: buildPayload(), generatedPrompt }),
+    });
+    alert(res.ok ? "Feedback received. Thank you!" : "Feedback failed.");
+  }
+
+  function handleCopyPrompt() {
+    if (!generatedPrompt) return;
+    navigator.clipboard.writeText(generatedPrompt).then(() => {
+      alert("Prompt copied to clipboard!");
+    }).catch(() => {
+      alert("Copy failed. Please try again.");
+    });
+  }
+
+  function handleDownloadPrompt() {
+    if (!generatedPrompt) return;
+    const blob = new Blob([generatedPrompt], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = "prompt.txt";
     a.click();
     URL.revokeObjectURL(url);
-  }
-
-  async function handleFeedback() {
-    const feedback = prompt("Rate 1–5 and optionally add comments:");
-    if (!feedback) return;
-    const res = await fetch("/api/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ feedback, context: buildPayload() }),
-    });
-    alert(res.ok ? "Feedback received. Thank you!" : "Feedback failed.");
   }
 
   return (
@@ -223,13 +232,15 @@ export default function Page() {
           <label htmlFor="customNeed" className="block text-sm font-medium text-gray-700">
             Custom Need
           </label>
-          <p className="text-xs text-gray-500 mb-2">Describe what you want the AI to do.</p>
+          <p className="text-xs text-gray-500 mb-2">
+            Describe what you want the AI to do. Be specific about goals and constraints.
+          </p>
           <textarea
             id="customNeed"
             rows={4}
             value={customNeed}
             onChange={(e) => setCustomNeed(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
             placeholder="Example: Write a persuasive email to a prospective client about our new feature..."
             required
           />
@@ -239,25 +250,43 @@ export default function Page() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
             <label htmlFor="myRole" className="block text-sm font-medium text-gray-700">My Role</label>
-            <select id="myRole" value={myRole} onChange={(e) => setMyRole(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {myRoleOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            <select
+              id="myRole"
+              value={myRole}
+              onChange={(e) => setMyRole(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
+            >
+              {myRoleOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 
           <div>
             <label htmlFor="aiRole" className="block text-sm font-medium text-gray-700">AI Role</label>
-            <select id="aiRole" value={aiRole} onChange={(e) => setAiRole(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {aiRoleOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            <select
+              id="aiRole"
+              value={aiRole}
+              onChange={(e) => setAiRole(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
+            >
+              {aiRoleOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 
           <div>
             <label htmlFor="audience" className="block text-sm font-medium text-gray-700">Audience</label>
-            <select id="audience" value={audience} onChange={(e) => setAudience(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {audienceOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            <select
+              id="audience"
+              value={audience}
+              onChange={(e) => setAudience(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
+            >
+              {audienceOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -266,45 +295,75 @@ export default function Page() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div>
             <label htmlFor="outputFormat" className="block text-sm font-medium text-gray-700">Output Format</label>
-            <select id="outputFormat" value={outputFormat} onChange={(e) => setOutputFormat(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {outputFormatOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            <select
+              id="outputFormat"
+              value={outputFormat}
+              onChange={(e) => setOutputFormat(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
+            >
+              {outputFormatOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 
           <div>
             <label htmlFor="length" className="block text-sm font-medium text-gray-700">Length</label>
-            <select id="length" value={length} onChange={(e) => setLength(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {lengthOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            <select
+              id="length"
+              value={length}
+              onChange={(e) => setLength(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
+            >
+              {lengthOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 
           <div>
             <label htmlFor="style" className="block text-sm font-medium text-gray-700">Style</label>
-            <select id="style" value={style} onChange={(e) => setStyle(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {styleOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            <select
+              id="style"
+              value={style}
+              onChange={(e) => setStyle(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
+            >
+              {styleOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
 
           <div>
             <label htmlFor="tone" className="block text-sm font-medium text-gray-700">Tone</label>
-            <select id="tone" value={tone} onChange={(e) => setTone(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {toneOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+            <select
+              id="tone"
+              value={tone}
+              onChange={(e) => setTone(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
+            >
+              {toneOptions.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
             </select>
           </div>
         </div>
 
-        {/* Constraints and advanced */}
+        {/* Constraints */}
         <div className="mb-6">
           <label htmlFor="constraints" className="block text-sm font-medium text-gray-700">Constraints (optional)</label>
-          <textarea id="constraints" rows={3} value={constraints} onChange={(e) => setConstraints(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="E.g., 200–300 words, include a CTA, avoid jargon, use bullet points." />
+          <textarea
+            id="constraints"
+            rows={3}
+            value={constraints}
+            onChange={(e) => setConstraints(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+            placeholder="E.g., 200–300 words, include a CTA, avoid jargon, use bullet points."
+          />
         </div>
 
+        {/* Advanced options */}
         <details className="mb-6">
           <summary className="cursor-pointer font-medium">Advanced options</summary>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -333,20 +392,48 @@ export default function Page() {
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-3">
-          <button type="submit"
-            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <button
+            type="submit"
+            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+          >
             Generate prompt
           </button>
-          <button type="button" onClick={handleSave}
-            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">Save</button>
-          <button type="button" onClick={handleShare}
-            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">Share</button>
-          <button type="button" onClick={handleDownload}
-            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">Download</button>
-          <button type="button" onClick={handleFeedback}
-            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">Give feedback</button>
+          <button type="button" onClick={handleSave} className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">
+            Save
+          </button>
+          <button type="button" onClick={handleShare} className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">
+            Share
+          </button>
+          <button type="button" onClick={handleFeedback} className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">
+            Give feedback
+          </button>
         </div>
       </form>
+
+      {/* Generated prompt output */}
+      {generatedPrompt && (
+        <div className="mt-8 rounded-md border border-gray-200 p-4 bg-gray-50">
+          <h2 className="text-lg font-semibold mb-2">Generated Prompt</h2>
+          <pre className="whitespace-pre-wrap text-sm">{generatedPrompt}</pre>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleCopyPrompt}
+              className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
+            >
+              Copy
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadPrompt}
+              className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
+            >
+              Download
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
