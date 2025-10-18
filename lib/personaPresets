@@ -1,0 +1,113 @@
+// src/lib/personaPresets.ts
+
+import { Inputs } from "./assemblePrompt";
+
+export const personaPresets: Record<string, Partial<Inputs>> = {
+  "Content Creator": {
+    role: "Content Creator",
+    tone: "Conversational",
+    format: "Paragraph",
+    audience: "General Public",
+    maxWords: 500,
+    structureStyle: "Narrative",
+  },
+  "Marketer": {
+    role: "Marketer",
+    tone: "Persuasive",
+    format: "Ad Copy",
+    audience: "Executives",
+    maxWords: 100,
+    structureStyle: "Hook - Value Prop - CTA",
+  },
+  "Product Manager": {
+    role: "Product Manager",
+    tone: "Professional",
+    format: "Bullet list",
+    audience: "Internal team",
+    structure: true,
+    structureStyle: "PRD Outline",
+  },
+  "UX/UI Designer": {
+    role: "UX Designer",
+    tone: "Educational",
+    format: "Step-by-step instructions",
+    audience: "Developers",
+  },
+  "Sales Team": {
+    role: "Salesperson",
+    tone: "Friendly",
+    format: "Paragraph",
+    audience: "Executives",
+    maxWords: 150,
+  },
+  "Educator": {
+    role: "Educator",
+    tone: "Educational",
+    format: "Lesson Plan",
+    audience: "Students",
+    structure: true,
+    structureStyle: "Lesson Outline",
+  },
+  "Student / Researcher": {
+    role: "Researcher",
+    tone: "Academic",
+    format: "Paragraph",
+    audience: "Academic",
+    citations: true,
+    seo: false,
+  },
+  "Developer": {
+    role: "Software Developer",
+    tone: "Professional",
+    format: "Code block",
+    audience: "Developers",
+  },
+  "Recruiter / HR": {
+    role: "Recruiter",
+    tone: "Professional",
+    format: "Job Description",
+    audience: "General Public",
+  },
+  "Customer Support": {
+    role: "Customer Support",
+    tone: "Friendly",
+    format: "Dialogue",
+    audience: "General Public",
+  },
+  "Legal / Compliance": {
+    role: "Lawyer",
+    tone: "Professional",
+    format: "Paragraph",
+    audience: "Executives",
+    citations: true,
+    maxWords: 300,
+  },
+  "Non-native English User": {
+    role: "General User",
+    tone: "Professional",
+    format: "Paragraph",
+    audience: "General Public",
+  },
+  "Entrepreneur / Startup": {
+    role: "Entrepreneur",
+    tone: "Persuasive",
+    format: "Pitch Deck Outline",
+    audience: "Investors",
+    structure: true,
+  },
+  "Policy Analyst": {
+    role: "Policy Analyst",
+    tone: "Journalistic",
+    format: "Report",
+    audience: "Executives",
+    citations: true,
+    maxWords: 400,
+  },
+  "Creative Writer": {
+    role: "Creative Writer",
+    tone: "Storytelling",
+    format: "Narrative",
+    audience: "General Public",
+    maxWords: 800,
+  },
+};
