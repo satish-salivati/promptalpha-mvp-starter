@@ -1,4 +1,6 @@
 "use client";
+import { personaPresets } from "../../lib/personaPresets";
+
 
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -136,6 +138,15 @@ export default function Home() {
   const [toast, setToast] = useState<string | null>(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [showSegments, setShowSegments] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState("");
+function applyPersona(persona: string) {
+  setSelectedPersona(persona);
+  const preset = personaPresets[persona];
+  if (preset) {
+    setInputs({ ...inputs, ...preset });
+    showToast(`Persona applied: ${persona}`);
+  }
+}
 
   // Load persisted
   useEffect(() => {
@@ -295,6 +306,35 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Left column: Prompt setup */}
           <div className="space-y-4">
+              <div className={`p-4 rounded shadow ${cardClass}`}>
+  <h2 className="font-semibold mb-1">Persona quick start</h2>
+  <p className="text-xs text-gray-500 mb-2">
+    Pick a persona to auto-fill Role, Tone, Format, Audience, etc. You can edit anything afterward.
+  </p>
+
+  <select
+    value={selectedPersona}
+    onChange={(e) => applyPersona(e.target.value)}
+    className="border rounded p-2 w-full"
+    aria-label="Select a persona"
+  >
+    <option value="">Select a persona</option>
+    {Object.keys(personaPresets).map((p) => (
+      <option key={p} value={p}>
+        {p}
+      </option>
+    ))}
+  </select>
+
+  {selectedPersona && (
+    <button
+      onClick={() => applyPersona(selectedPersona)}
+      className="mt-2 border px-3 py-1 rounded text-sm"
+    >
+      Reset to {selectedPersona} defaults
+    </button>
+  )}
+</div>
             <div className={`p-4 rounded shadow ${cardClass}`}>
               <h2 className="font-semibold mb-1">1. Role</h2>
               <p className="text-xs text-gray-500 mb-2">{HINTS.role}</p>
