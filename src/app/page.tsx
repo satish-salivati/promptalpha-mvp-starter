@@ -1,5 +1,5 @@
 "use client";
-import { personaPresets } from "../../../lib/personaPresets";
+import { personaPresets } from "../../lib/personaPresets";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ROLES,
