@@ -3,73 +3,74 @@
 import { useState } from "react";
 
 export default function Page() {
-  // Local form state (simple and clear)
+  // State hooks
   const [customNeed, setCustomNeed] = useState("");
-  const [myRole, setMyRole] = useState(""); // previously 'persona'
-  const [aiRole, setAiRole] = useState(""); // previously 'role'
+  const [myRole, setMyRole] = useState(""); // formerly persona
+  const [aiRole, setAiRole] = useState(""); // formerly role
+  const [audience, setAudience] = useState("");
+  const [outputFormat, setOutputFormat] = useState("");
+  const [length, setLength] = useState("");
+  const [style, setStyle] = useState("");
+  const [language, setLanguage] = useState("English");
   const [tone, setTone] = useState("Neutral");
   const [constraints, setConstraints] = useState("");
 
-  // Example options (adjust as needed)
-  const myRoleOptions = [
-    "Founder",
-    "HR Manager",
-    "Product Manager",
-    "Sales Lead",
-    "Student",
-    "Researcher",
-  ];
-
-  const aiRoleOptions = [
-    "Copywriter",
-    "Analyst",
-    "Recruiter",
-    "Tutor",
-    "Strategist",
-    "Assistant",
-  ];
-
+  // Example options (adjust to your product taxonomy)
+  const myRoleOptions = ["Founder", "HR Manager", "Product Manager", "Sales Lead", "Student", "Researcher"];
+  const aiRoleOptions = ["Copywriter", "Analyst", "Recruiter", "Tutor", "Strategist", "Assistant"];
+  const audienceOptions = ["General Public", "Executives", "Employees", "Students", "Customers"];
+  const outputFormatOptions = ["Email", "Blog Post", "Report", "Slide Deck", "Summary"];
+  const lengthOptions = ["Short (100–200 words)", "Medium (300–500 words)", "Long (1000+ words)"];
+  const styleOptions = ["Formal", "Casual", "Persuasive", "Storytelling", "Technical"];
   const toneOptions = ["Neutral", "Formal", "Friendly", "Persuasive", "Technical"];
+  const languageOptions = ["English", "Spanish", "French", "German", "Hindi"];
 
-  // Submit handler (wire to your API as needed)
   async function handleGeneratePrompt(e: React.FormEvent) {
     e.preventDefault();
 
-    // If your backend still expects 'persona' and 'role' keys, map here:
+    // Map UI names to backend keys (keep persona/role for API compatibility)
     const payload = {
       customNeed,
-      persona: myRole, // maps My Role -> persona
-      role: aiRole, // maps AI Role -> role
+      persona: myRole,
+      role: aiRole,
+      audience,
+      outputFormat,
+      length,
+      style,
+      language,
       tone,
       constraints,
     };
 
-    // Example call to your API route (adjust the endpoint/body to match your backend)
-    const res = await fetch("/api/testPrompt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch("/api/testPrompt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      console.error("Prompt generation failed");
-      alert("Something went wrong generating the prompt.");
-      return;
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Prompt generation failed:", text);
+        alert("Something went wrong generating the prompt.");
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Generated prompt:", data);
+      alert("Prompt generated! Check console for details.");
+    } catch (err) {
+      console.error("Network/Unexpected error:", err);
+      alert("Network error. Please try again.");
     }
-
-    const data = await res.json();
-    // TODO: Handle/display the generated prompt (replace with your UI)
-    console.log("Generated prompt:", data);
-    alert("Prompt generated! Check console for details.");
   }
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      {/* Page Title */}
       <h1 className="text-2xl font-semibold mb-6">PromptAlpha</h1>
 
       <form onSubmit={handleGeneratePrompt}>
-        {/* 1) Custom Need at the top, very prominent */}
+        {/* 1) Custom Need (prominent) */}
         <div className="mb-6">
           <label htmlFor="customNeed" className="block text-sm font-medium text-gray-700">
             Custom Need
@@ -79,7 +80,6 @@ export default function Page() {
           </p>
           <textarea
             id="customNeed"
-            name="customNeed"
             rows={4}
             value={customNeed}
             onChange={(e) => setCustomNeed(e.target.value)}
@@ -96,7 +96,6 @@ export default function Page() {
           </label>
           <select
             id="myRole"
-            name="myRole"
             value={myRole}
             onChange={(e) => setMyRole(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -117,7 +116,6 @@ export default function Page() {
           </label>
           <select
             id="aiRole"
-            name="aiRole"
             value={aiRole}
             onChange={(e) => setAiRole(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -131,14 +129,112 @@ export default function Page() {
           </select>
         </div>
 
-        {/* 4) Tone */}
+        {/* 4) Audience */}
+        <div className="mb-4">
+          <label htmlFor="audience" className="block text-sm font-medium text-gray-700">
+            Audience
+          </label>
+          <select
+            id="audience"
+            value={audience}
+            onChange={(e) => setAudience(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select audience</option>
+            {audienceOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 5) Output Format */}
+        <div className="mb-4">
+          <label htmlFor="outputFormat" className="block text-sm font-medium text-gray-700">
+            Output Format
+          </label>
+          <select
+            id="outputFormat"
+            value={outputFormat}
+            onChange={(e) => setOutputFormat(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select format</option>
+            {outputFormatOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 6) Length */}
+        <div className="mb-4">
+          <label htmlFor="length" className="block text-sm font-medium text-gray-700">
+            Length
+          </label>
+          <select
+            id="length"
+            value={length}
+            onChange={(e) => setLength(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select length</option>
+            {lengthOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 7) Style */}
+        <div className="mb-4">
+          <label htmlFor="style" className="block text-sm font-medium text-gray-700">
+            Style
+          </label>
+          <select
+            id="style"
+            value={style}
+            onChange={(e) => setStyle(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">Select style</option>
+            {styleOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 8) Language */}
+        <div className="mb-4">
+          <label htmlFor="language" className="block text-sm font-medium text-gray-700">
+            Language
+          </label>
+          <select
+            id="language"
+            value={language}
+            onChange={(e) => setLanguage(e.target.value)}
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {languageOptions.map((opt) => (
+              <option key={opt} value={opt}>
+                {opt}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* 9) Tone */}
         <div className="mb-4">
           <label htmlFor="tone" className="block text-sm font-medium text-gray-700">
             Tone
           </label>
           <select
             id="tone"
-            name="tone"
             value={tone}
             onChange={(e) => setTone(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -151,7 +247,7 @@ export default function Page() {
           </select>
         </div>
 
-        {/* 5) Constraints (optional, replaces “Advanced”) */}
+        {/* 10) Constraints (optional) */}
         <div className="mb-6">
           <label htmlFor="constraints" className="block text-sm font-medium text-gray-700">
             Constraints (optional)
@@ -161,7 +257,6 @@ export default function Page() {
           </p>
           <textarea
             id="constraints"
-            name="constraints"
             rows={3}
             value={constraints}
             onChange={(e) => setConstraints(e.target.value)}
