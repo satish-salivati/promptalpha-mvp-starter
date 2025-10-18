@@ -1,7 +1,5 @@
 "use client";
 import { personaPresets } from "../../lib/personaPresets";
-
-
 import React, { useEffect, useMemo, useState } from "react";
 import {
   ROLES,
@@ -147,7 +145,6 @@ function applyPersona(persona: string) {
     showToast(`Persona applied: ${persona}`);
   }
 }
-
   // Load persisted
   useEffect(() => {
     const darkStored = localStorage.getItem(STORAGE.dark);
