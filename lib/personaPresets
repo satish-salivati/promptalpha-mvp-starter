@@ -128,4 +128,4 @@ export const personaPresets = {
     structure: true,
     structureStyle: "Narrative",
   },
-} as const;
+}
