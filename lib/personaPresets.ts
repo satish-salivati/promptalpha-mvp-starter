@@ -1,6 +1,6 @@
 // lib/personaPresets.ts
 
-export const personaPresets = {
+export const personaPresets: { [key: string]: any } = {
   "Content Creator": {
     role: "Content Creator",
     tone: "Friendly",
