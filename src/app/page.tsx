@@ -239,19 +239,7 @@ export default function Page() {
     const data = await res.json();
     setGeneratedPrompt(data.prompt || "");
   }
-
-    async function handleFeedback() {
-    const rating = prompt("Rate 1–5:");
-    const comments = prompt("Optional comments:");
-    if (!rating && !comments) return;
-    const res = await fetch("/api/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ rating, comments, context: buildPayload(), generatedPrompt }),
-    });
-    alert(res.ok ? "Feedback received. Thank you!" : "Feedback failed.");
-  }
-
+  
   function handleCopyPrompt() {
     if (!generatedPrompt) return;
     navigator.clipboard.writeText(generatedPrompt).then(() => {
