@@ -497,7 +497,7 @@ export default function Page() {
         </div>
       </form>
 
-      {/* Generated prompt output */}
+            {/* Generated prompt output */}
       {generatedPrompt && (
         <div className="mt-8 rounded-md border border-gray-200 p-4 bg-gray-50">
           <h2 className="text-lg font-semibold mb-2">Generated Prompt</h2>
@@ -508,7 +508,7 @@ export default function Page() {
               type="button"
               onClick={handleCopyPrompt}
               className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
-             >
+            >
               Copy
             </button>
             <button
@@ -520,7 +520,9 @@ export default function Page() {
             </button>
           </div>
         </div>
-      </main>
-    );
+      )}
+    </main>
+  );
 }
+
 
