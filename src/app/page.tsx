@@ -508,7 +508,7 @@ export default function Page() {
               type="button"
               onClick={handleCopyPrompt}
               className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
-            >
+             >
               Copy
             </button>
             <button
@@ -523,3 +523,4 @@ export default function Page() {
       </main>
     );
 }
+
