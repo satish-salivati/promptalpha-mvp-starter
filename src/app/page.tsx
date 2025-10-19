@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-
 export default function Page() {
-
-import { useState } from "react";
-
 export default function Page() {
   // ✅ Your existing state
   const [generatedPrompt, setGeneratedPrompt] = useState("");
