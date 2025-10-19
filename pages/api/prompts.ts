@@ -90,7 +90,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // GET health check
     return res.status(200).json({ ok: true, route: "/api/prompts", action });
   } catch (err: any) {
-  console.error("API error:", err);
-  return res.status(500).json({ ok: false, error: err.message || "Server error" });
+    console.error("API error:", err);
+    return res.status(500).json({
+      ok: false,
+      error: err.message || "Server error",
+      stack: err.stack || null,
+    });
   }
 }
