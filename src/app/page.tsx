@@ -394,47 +394,7 @@ export default function Page() {
             </select>
           </div>
 
-          <div>
-            <label htmlFor="length" className="block text-sm font-medium text-gray-700">Length</label>
-            <select
-              id="length"
-              value={length}
-              onChange={(e) => setLength(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {lengthOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="style" className="block text-sm font-medium text-gray-700">Style</label>
-            <select
-              id="style"
-              value={style}
-              onChange={(e) => setStyle(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {styleOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="tone" className="block text-sm font-medium text-gray-700">Tone</label>
-            <select
-              id="tone"
-              value={tone}
-              onChange={(e) => setTone(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {toneOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
-              ))}
-            </select>
-          </div>
+             </div>
         </div>
 
         {/* Constraints */}
@@ -497,7 +457,7 @@ export default function Page() {
         </div>
       </form>
 
-            {/* Generated prompt output */}
+      {/* Generated prompt output */}
       {generatedPrompt && (
         <div className="mt-8 rounded-md border border-gray-200 p-4 bg-gray-50">
           <h2 className="text-lg font-semibold mb-2">Generated Prompt</h2>
