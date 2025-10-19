@@ -239,16 +239,7 @@ export default function Page() {
     const data = await res.json();
     setGeneratedPrompt(data.prompt || "");
   }
-  
-  function handleCopyPrompt() {
-    if (!generatedPrompt) return;
-    navigator.clipboard.writeText(generatedPrompt).then(() => {
-      alert("Prompt copied to clipboard!");
-    }).catch(() => {
-      alert("Copy failed. Please try again.");
-    });
-  }
-
+    
   function handleDownloadPrompt() {
     if (!generatedPrompt) return;
     const blob = new Blob([generatedPrompt], { type: "text/plain" });
