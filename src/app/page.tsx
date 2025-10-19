@@ -240,15 +240,6 @@ export default function Page() {
     setGeneratedPrompt(data.prompt || "");
   }
 
-  async function handleSave() {
-    const res = await fetch("/api/savePrompt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...buildPayload(), generatedPrompt }),
-    });
-    alert(res.ok ? "Saved!" : "Save failed.");
-  }
-
   async function handleShare() {
     const res = await fetch("/api/sharePrompt", {
       method: "POST",
