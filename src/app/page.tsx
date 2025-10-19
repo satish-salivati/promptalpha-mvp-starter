@@ -394,10 +394,22 @@ export default function Page() {
             </select>
           </div>
 
-             </div>
-        </div>
+                       </div>
+          {/* Constraints */}
+          <div className="mb-6">
+            <label htmlFor="constraints" className="block text-sm font-medium text-gray-700">
+              Constraints (optional)
+            </label>
+            <textarea
+              id="constraints"
+              rows={3}
+              value={constraints}
+              onChange={(e) => setConstraints(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+              placeholder="E.g., 200–300 words, include a CTA, avoid jargon, use bullet points."
+            />
+          </div>
 
-        {/* Constraints */}
         <div className="mb-6">
           <label htmlFor="constraints" className="block text-sm font-medium text-gray-700">Constraints (optional)</label>
           <textarea
