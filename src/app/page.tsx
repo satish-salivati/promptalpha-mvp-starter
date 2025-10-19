@@ -225,7 +225,7 @@ export default function Page() {
     e.preventDefault();
     const payload = buildPayload();
 
-    const res = await fetch("/api/testPrompt", {
+    const res = await fetch("/api/prompts?action=generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -237,7 +237,8 @@ export default function Page() {
     }
 
     const data = await res.json();
-    setGeneratedPrompt(data.prompt || "");
+    // The API returns { ok: true, generatedPrompt: "..." }
+    setGeneratedPrompt(data.generatedPrompt || "");
   }
     
   return (
