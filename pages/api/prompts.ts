@@ -6,6 +6,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Helper to build a prompt string from the payload
 function buildPrompt(payload: any) {
   const {
     customNeed = "",
@@ -54,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           const userPrompt = buildPrompt(body);
 
           const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini", // or gpt-4o, gpt-3.5-turbo
+            model: "gpt-4o-mini", // you can also use "gpt-4o" or "gpt-3.5-turbo"
             messages: [{ role: "user", content: userPrompt }],
           });
 
@@ -86,10 +87,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
 
+    // GET health check
     return res.status(200).json({ ok: true, route: "/api/prompts", action });
   } catch (err) {
     console.error("API error:", err);
     return res.status(500).json({ ok: false, error: "Server error" });
   }
 }
-
