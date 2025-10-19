@@ -3,7 +3,100 @@
 import { useState } from "react";
 
 export default function Page() {
-  // State hooks
+ "use client";
+
+import { useState } from "react";
+
+export default function Page() {
+  // ✅ Your existing state
+  const [generatedPrompt, setGeneratedPrompt] = useState("");
+
+  // ✅ NEW state for linking feedback to a saved prompt
+  const [promptId, setPromptId] = useState<string | null>(null);
+
+  // ✅ Helper to build the payload you want to send
+  function buildPayload() {
+    return { generatedPrompt };
+  }
+
+  // ✅ Save handler
+  async function handleSave() {
+    const res = await fetch("/api/prompts?action=save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildPayload()),
+    });
+
+    const data = res.ok ? await res.json() : null;
+    if (data?.id) setPromptId(data.id);
+
+    alert(res.ok ? "Saved!" : "Save failed.");
+  }
+
+  // ✅ Share handler
+  async function handleShare() {
+    const res = await fetch("/api/prompts?action=share", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildPayload()),
+    });
+
+    const data = res.ok ? await res.json() : null;
+    if (data?.id) setPromptId(data.id);
+
+    if (data?.url) {
+      await navigator.clipboard.writeText(data.url).catch(() => {});
+      alert("Share link copied to clipboard!");
+    } else {
+      alert("Share failed.");
+    }
+  }
+
+  // ✅ Feedback handler
+  async function handleFeedback() {
+    if (!promptId) {
+      alert("Please Save or Share first before giving feedback.");
+      return;
+    }
+
+    const ratingStr = prompt("Rate 1–5:");
+    const rating = ratingStr ? parseInt(ratingStr, 10) : undefined;
+    const comments = prompt("Any comments?");
+
+    if (!rating || rating < 1 || rating > 5) {
+      alert("Please enter a rating from 1 to 5.");
+      return;
+    }
+
+    const res = await fetch("/api/prompts?action=feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ promptId, rating, comments }),
+    });
+
+    alert(res.ok ? "Feedback received. Thank you!" : "Feedback failed.");
+  }
+
+  // ✅ Your UI
+  return (
+    <main>
+      {/* Example: textarea for generated prompt */}
+      <textarea
+        value={generatedPrompt}
+        onChange={(e) => setGeneratedPrompt(e.target.value)}
+      />
+
+      {/* Buttons wired to handlers */}
+      <div>
+        <button onClick={handleSave}>Save</button>
+        <button onClick={handleShare}>Share</button>
+        <button onClick={handleFeedback}>Feedback</button>
+      </div>
+    </main>
+  );
+}
+
+    // State hooks
   const [customNeed, setCustomNeed] = useState("");
   const [myRole, setMyRole] = useState("Founder");
   const [aiRole, setAiRole] = useState("Copywriter");
