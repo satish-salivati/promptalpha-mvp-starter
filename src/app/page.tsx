@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 export default function Page() {
-export default function Page() {
   // ✅ Your existing state
   const [generatedPrompt, setGeneratedPrompt] = useState("");
 
