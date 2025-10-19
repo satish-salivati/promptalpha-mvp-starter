@@ -240,17 +240,6 @@ export default function Page() {
     setGeneratedPrompt(data.prompt || "");
   }
     
-  function handleDownloadPrompt() {
-    if (!generatedPrompt) return;
-    const blob = new Blob([generatedPrompt], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "prompt.txt";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="text-2xl font-semibold mb-6">PromptAlpha</h1>
