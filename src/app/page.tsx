@@ -240,22 +240,7 @@ export default function Page() {
     setGeneratedPrompt(data.prompt || "");
   }
 
-  async function handleShare() {
-    const res = await fetch("/api/sharePrompt", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...buildPayload(), generatedPrompt }),
-    });
-    const data = res.ok ? await res.json() : null;
-    if (data?.url) {
-      navigator.clipboard.writeText(data.url).catch(() => {});
-      alert("Share link copied to clipboard!");
-    } else {
-      alert("Share failed.");
-    }
-  }
-
-  async function handleFeedback() {
+    async function handleFeedback() {
     const rating = prompt("Rate 1–5:");
     const comments = prompt("Optional comments:");
     if (!rating && !comments) return;
