@@ -219,29 +219,7 @@ export default function Page() {
     "Data-driven",
     "Urgent",
   ];
-
-  // Build payload
-  function buildPayload() {
-    return {
-      customNeed,
-      persona: myRole,
-      role: aiRole,
-      audience,
-      outputFormat,
-      length,
-      style,
-      tone,
-      constraints,
-      advanced: {
-        seoFriendly,
-        includeReferences,
-        structuredOutput,
-        avoidPitfalls,
-        complianceMode,
-      },
-    };
-  }
-
+ 
   // Handlers
   async function handleGeneratePrompt(e: React.FormEvent) {
     e.preventDefault();
