@@ -28,93 +28,19 @@ export default function Page() {
   const [promptId, setPromptId] = useState<string | null>(null);
 
   // Options
-  const myRoleOptions = [
-    "Founder",
-    "CEO / Executive",
-    "HR Manager",
-    "Recruiter / Talent Partner",
-    "Product Manager",
-    "Project Manager",
-    "Sales Lead / AE",
-    "Customer Success",
-    "Marketing Manager",
-    "Content Creator",
-    "Educator / Trainer",
-    "Student",
-    "Researcher / Analyst",
-    "Operations Manager",
-    "Engineer (Non-ML)",
-  ];
+  const myRoleOptions = [ "Founder","CEO / Executive","HR Manager","Recruiter / Talent Partner","Product Manager","Project Manager","Sales Lead / AE","Customer Success","Marketing Manager","Content Creator","Educator / Trainer","Student","Researcher / Analyst","Operations Manager","Engineer (Non-ML)" ];
 
-  const aiRoleOptions = [
-    "Copywriter",
-    "Editor",
-    "Strategist",
-    "Analyst",
-    "Researcher",
-    "Recruiter",
-    "Tutor",
-    "Assistant",
-    "Summarizer",
-    "Planner",
-    "Scriptwriter",
-    "UX Writer",
-    "Technical Writer",
-    "Email Composer",
-    "Social Media Manager",
-  ];
+  const aiRoleOptions = [ "Copywriter","Editor","Strategist","Analyst","Researcher","Recruiter","Tutor","Assistant","Summarizer","Planner","Scriptwriter","UX Writer","Technical Writer","Email Composer","Social Media Manager" ];
 
-  const audienceOptions = [
-    "General Public",
-    "Prospective Customers",
-    "Existing Customers",
-    "Executives",
-    "Managers",
-    "Employees",
-    "Partners",
-    "Investors",
-    "Students",
-    "Practitioners / Peers",
-  ];
+  const audienceOptions = [ "General Public","Prospective Customers","Existing Customers","Executives","Managers","Employees","Partners","Investors","Students","Practitioners / Peers" ];
 
-  const outputFormatOptions = [
-    "Email",
-    "Blog Post",
-    "LinkedIn Post",
-    "Tweet Thread",
-    "Report",
-    "Brief / One-pager",
-    "Slide Outline",
-    "Product Spec",
-    "FAQ",
-    "Press Release",
-    "Case Study",
-    "User Story",
-    "Job Description",
-    "Interview Questions",
-    "Checklist",
-  ];
+  const outputFormatOptions = [ "Email","Blog Post","LinkedIn Post","Tweet Thread","Report","Brief / One-pager","Slide Outline","Product Spec","FAQ","Press Release","Case Study","User Story","Job Description","Interview Questions","Checklist" ];
 
-  const lengthOptions = [
-    "Very short (50–100 words)",
-    "Short (100–200 words)",
-    "Medium (300–500 words)",
-    "Long (800–1200 words)",
-    "Extended (1500+ words)",
-  ];
+  const lengthOptions = [ "Very short (50–100 words)","Short (100–200 words)","Medium (300–500 words)","Long (800–1200 words)","Extended (1500+ words)" ];
 
-  const styleOptions = [
-    "Formal",
-    "Casual",
-    "Persuasive",
-    "Storytelling",
-    "Technical",
-    "Analytical",
-    "Instructional",
-    "Conversational",
-    "Executive-ready",
-    "Bullet-heavy",
-  ];
+  const styleOptions = [ "Formal","Casual","Persuasive","Storytelling","Technical","Analytical","Instructional","Conversational","Executive-ready","Bullet-heavy" ];
+
+  const toneOptions = [ "Neutral","Friendly","Confident","Empathetic","Direct","Inspirational","Data-driven","Urgent" ];
 
   // Helper to build the payload
   function buildPayload() {
@@ -189,11 +115,10 @@ export default function Page() {
 
   function handleCopyPrompt() {
     if (!generatedPrompt) return;
-    navigator.clipboard.writeText(generatedPrompt).then(() => {
-      alert("Prompt copied to clipboard!");
-    }).catch(() => {
-      alert("Copy failed. Please try again.");
-    });
+    navigator.clipboard
+      .writeText(generatedPrompt)
+      .then(() => alert("Prompt copied to clipboard!"))
+      .catch(() => alert("Copy failed. Please try again."));
   }
 
   function handleDownloadPrompt() {
@@ -207,40 +132,36 @@ export default function Page() {
     URL.revokeObjectURL(url);
   }
 
-  // (UI continues below…)
-
-  const toneOptions = [
-    "Neutral",
-    "Friendly",
-    "Confident",
-    "Empathetic",
-    "Direct",
-    "Inspirational",
-    "Data-driven",
-    "Urgent",
-  ];
- 
-  // Handlers
   async function handleGeneratePrompt(e: React.FormEvent) {
     e.preventDefault();
+    console.log("Handler start");
     const payload = buildPayload();
+    console.log("Payload:", payload);
 
-    const res = await fetch("/api/prompts?action=generate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
+    try {
+      const res = await fetch("/api/prompts?action=generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
-    if (!res.ok) {
-      alert("Something went wrong generating the prompt.");
-      return;
+      console.log("Fetch status:", res.status);
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("API returned error:", errData);
+        alert(errData?.error || "Something went wrong generating the prompt.");
+        return;
+      }
+
+      const data = await res.json();
+      console.log("API response:", data);
+      setGeneratedPrompt(data.generatedPrompt || "");
+    } catch (err) {
+      console.error("Fetch threw:", err);
+      alert("Network error. See console for details.");
     }
-
-    const data = await res.json();
-    // The API returns { ok: true, generatedPrompt: "..." }
-    setGeneratedPrompt(data.generatedPrompt || "");
   }
-    
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="text-2xl font-semibold mb-6">PromptAlpha</h1>
@@ -248,11 +169,15 @@ export default function Page() {
       <form onSubmit={handleGeneratePrompt}>
         {/* Custom Need */}
         <div className="mb-6">
-          <label htmlFor="customNeed" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="customNeed"
+            className="block text-sm font-medium text-gray-700"
+          >
             Custom Need
           </label>
           <p className="text-xs text-gray-500 mb-2">
-            Describe what you want the AI to do. Be specific about goals and constraints.
+            Describe what you want the AI to do. Be specific about goals and
+            constraints.
           </p>
           <textarea
             id="customNeed"
@@ -268,7 +193,12 @@ export default function Page() {
         {/* Context group */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
-            <label htmlFor="myRole" className="block text-sm font-medium text-gray-700">My Role</label>
+            <label
+              htmlFor="myRole"
+              className="block text-sm font-medium text-gray-700"
+            >
+              My Role
+            </label>
             <select
               id="myRole"
               value={myRole}
@@ -276,13 +206,20 @@ export default function Page() {
               className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
             >
               {myRoleOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label htmlFor="aiRole" className="block text-sm font-medium text-gray-700">AI Role</label>
+            <label
+              htmlFor="aiRole"
+              className="block text-sm font-medium text-gray-700"
+            >
+              AI Role
+            </label>
             <select
               id="aiRole"
               value={aiRole}
@@ -290,13 +227,20 @@ export default function Page() {
               className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
             >
               {aiRoleOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </div>
 
           <div>
-            <label htmlFor="audience" className="block text-sm font-medium text-gray-700">Audience</label>
+            <label
+              htmlFor="audience"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Audience
+            </label>
             <select
               id="audience"
               value={audience}
@@ -304,7 +248,9 @@ export default function Page() {
               className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
             >
               {audienceOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </div>
@@ -313,7 +259,12 @@ export default function Page() {
         {/* Output group */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div>
-            <label htmlFor="outputFormat" className="block text-sm font-medium text-gray-700">Output Format</label>
+            <label
+              htmlFor="outputFormat"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Output Format
+            </label>
             <select
               id="outputFormat"
               value={outputFormat}
@@ -321,7 +272,9 @@ export default function Page() {
               className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
             >
               {outputFormatOptions.map((opt) => (
-                <option key={opt} value={opt}>{opt}</option>
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
               ))}
             </select>
           </div>
@@ -329,7 +282,10 @@ export default function Page() {
 
         {/* Constraints */}
         <div className="mb-6">
-          <label htmlFor="constraints" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="constraints"
+            className="block text-sm font-medium text-gray-700"
+          >
             Constraints (optional)
           </label>
           <textarea
@@ -342,40 +298,50 @@ export default function Page() {
           />
         </div>
 
-        <div className="mb-6">
-          <label htmlFor="constraints" className="block text-sm font-medium text-gray-700">Constraints (optional)</label>
-          <textarea
-            id="constraints"
-            rows={3}
-            value={constraints}
-            onChange={(e) => setConstraints(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-            placeholder="E.g., 200–300 words, include a CTA, avoid jargon, use bullet points."
-          />
-        </div>
-
         {/* Advanced options */}
         <details className="mb-6">
-          <summary className="cursor-pointer font-medium">Advanced options</summary>
+          <summary className="cursor-pointer font-medium">
+            Advanced options
+          </summary>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
             <label className="flex items-center gap-2">
-              <input type="checkbox" checked={seoFriendly} onChange={(e) => setSeoFriendly(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={seoFriendly}
+                onChange={(e) => setSeoFriendly(e.target.checked)}
+              />
               <span>SEO friendly</span>
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" checked={includeReferences} onChange={(e) => setIncludeReferences(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={includeReferences}
+                onChange={(e) => setIncludeReferences(e.target.checked)}
+              />
               <span>Include references</span>
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" checked={structuredOutput} onChange={(e) => setStructuredOutput(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={structuredOutput}
+                onChange={(e) => setStructuredOutput(e.target.checked)}
+              />
               <span>Structured output</span>
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" checked={avoidPitfalls} onChange={(e) => setAvoidPitfalls(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={avoidPitfalls}
+                onChange={(e) => setAvoidPitfalls(e.target.checked)}
+              />
               <span>Avoid pitfalls (jargon, fluff)</span>
             </label>
             <label className="flex items-center gap-2">
-              <input type="checkbox" checked={complianceMode} onChange={(e) => setComplianceMode(e.target.checked)} />
+              <input
+                type="checkbox"
+                checked={complianceMode}
+                onChange={(e) => setComplianceMode(e.target.checked)}
+              />
               <span>Compliance mode (conservative claims)</span>
             </label>
           </div>
@@ -389,13 +355,25 @@ export default function Page() {
           >
             Generate prompt
           </button>
-          <button type="button" onClick={handleSave} className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">
+          <button
+            type="button"
+            onClick={handleSave}
+            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+          >
             Save
           </button>
-          <button type="button" onClick={handleShare} className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+          >
             Share
           </button>
-          <button type="button" onClick={handleFeedback} className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">
+          <button
+            type="button"
+            onClick={handleFeedback}
+            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+          >
             Give feedback
           </button>
         </div>
@@ -428,5 +406,3 @@ export default function Page() {
     </main>
   );
 }
-
-
