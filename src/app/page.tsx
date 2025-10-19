@@ -519,7 +519,7 @@ export default function Page() {
               Download
             </button>
           </div>
-         </div>
-        </main>
-      );
-    }
+        </div>
+      </main>
+    );
+}
