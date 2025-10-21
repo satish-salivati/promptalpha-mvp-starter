@@ -7,16 +7,18 @@ export default function AdminPage() {
 
   useEffect(() => {
     async function fetchStats() {
-      const res = await fetch("/api/adminStats");
-      const data = await res.json();
-      setStats(data);
+      try {
+        const res = await fetch("/api/adminStats");
+        const data = await res.json();
+        setStats(data);
+      } catch (err) {
+        console.error("Failed to fetch stats", err);
+      }
     }
     fetchStats();
   }, []);
 
   if (status === "loading") return <p>Loading...</p>;
-
-  // Restrict access to your Gmail only
   if (!session || session.user?.email !== "ssatish6798@gmail.com") {
     return <p>Access denied</p>;
   }
@@ -45,8 +47,6 @@ export default function AdminPage() {
   );
 }
 
-// 👇 This disables static generation and forces runtime rendering
 export async function getServerSideProps() {
   return { props: {} };
 }
-
