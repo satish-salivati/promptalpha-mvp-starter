@@ -264,10 +264,9 @@ Constraints: ${constraints}
 
     // Feedback branch — aligned with your DB
     if (action === "feedback") {
-            const raw = req.body || {};
+      const raw = req.body || {};
       console.log("Feedback request body:", JSON.stringify(raw));
-
-      const flat =
+            const flat =
         raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
           ? raw.body
           : raw;
@@ -321,3 +320,4 @@ Constraints: ${constraints}
     return res.status(500).json({ error: "Server error" });
   }
 }
+  
