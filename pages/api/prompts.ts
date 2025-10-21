@@ -93,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Authenticate user via NextAuth
-  const session = await getServerSession(req, res, authOptions as any);
+  const session: any = await getServerSession(req, res, authOptions as any);
   const email = session?.user?.email ?? null;
   if (!email) {
     return res.status(401).json({ error: "Not authenticated" });
