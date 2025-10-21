@@ -47,22 +47,20 @@ async function resetUsageIfNewDay(userId: string) {
 }
 
 // Helper: ensure a usage row exists, and check quota
-// ⚠️ Modified: always return allowed:true for testing
+// ⚠️ For testing: always allow
 async function checkAndIncrementQuota(userId: string) {
-  // Ensure row exists
   const { error: fetchErr } = await supabaseAdmin
     .from("usage_limits")
     .select("daily_quota, used_today")
     .eq("user_id", userId)
     .single();
 
-  if (fetchErr && fetchErr.code === "PGRST116") {
+  if (fetchErr && (fetchErr as any).code === "PGRST116") {
     await supabaseAdmin
       .from("usage_limits")
       .insert({ user_id: userId, daily_quota: 10, used_today: 0 });
   }
 
-  // For testing: bypass quota enforcement
   return { allowed: true, used: 0, quota: 9999 };
 }
 
@@ -166,12 +164,19 @@ Constraints: ${constraints}
       });
     }
 
-    // Save a prompt (into saved_prompts table)
+    // Save a prompt (into saved_prompts table) — tolerant of multiple frontend keys
     if (action === "save") {
-      const { promptText = "" } = req.body;
+      const raw = req.body || {};
+      const promptText =
+        raw.promptText ??
+        raw.generatedPrompt ??
+        raw.prompt ??
+        raw.text ??
+        raw.content ??
+        (typeof raw === "string" ? raw : "");
 
-      if (!promptText) {
-        return res.status(400).json({ error: "promptText is required" });
+      if (!promptText || typeof promptText !== "string") {
+        return res.status(400).json({ error: "promptText is required", received: raw });
       }
 
       const { data, error } = await supabaseAdmin
