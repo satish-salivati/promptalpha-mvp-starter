@@ -1,36 +1,51 @@
-import type { NextApiRequest, NextApiResponse } from "next";
-import { supabaseServer } from "../lib/supabaseServer";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = supabaseServer();
+export default function AdminPage() {
+  const { data: session, status } = useSession();
+  const [stats, setStats] = useState<any>(null);
 
-  const { count: savedPrompts } = await supabase
-    .from("saved_prompts")
-    .select("*", { count: "exact", head: true });
+  useEffect(() => {
+    async function fetchStats() {
+      const res = await fetch("/api/adminStats");
+      const data = await res.json();
+      setStats(data);
+    }
+    fetchStats();
+  }, []);
 
-  const { count: feedbackCount } = await supabase
-    .from("feedback")
-    .select("*", { count: "exact", head: true });
+  if (status === "loading") return <p>Loading...</p>;
 
-  const { count: analyticsCount } = await supabase
-    .from("analytics")
-    .select("*", { count: "exact", head: true });
+  // Restrict access to your Gmail only
+  if (!session || session.user?.email !== "ssatish6798@gmail.com") {
+    return <p>Access denied</p>;
+  }
 
-  const { data: recentFeedback } = await supabase
-    .from("feedback")
-    .select("id, feedback_text, rating")
-    .order("created_at", { ascending: false })
-    .limit(5);
-
-  res.status(200).json({
-    savedPrompts,
-    feedbackCount,
-    analyticsCount,
-    recentFeedback: recentFeedback || [],
-  });
+  return (
+    <main className="p-6">
+      <h1 className="text-2xl font-bold mb-4">PromptAlpha Admin Panel</h1>
+      {stats ? (
+        <div>
+          <p>Saved Prompts: {stats.savedPrompts}</p>
+          <p>Feedback Count: {stats.feedbackCount}</p>
+          <p>Total Analytics Events: {stats.analyticsCount}</p>
+          <h2 className="mt-4 font-semibold">Recent Feedback</h2>
+          <ul>
+            {stats.recentFeedback.map((f: any) => (
+              <li key={f.id}>
+                {f.rating}★ — {f.feedback_text}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+        <p>Loading stats...</p>
+      )}
+    </main>
+  );
 }
+
+// 👇 This disables static generation and forces runtime rendering
 export async function getServerSideProps() {
-  // Forces this page to render at request time (no static pre-render),
-  // so next-auth's useSession() works correctly.
   return { props: {} };
 }
