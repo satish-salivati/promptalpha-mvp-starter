@@ -205,6 +205,26 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, prompts: data ?? [] });
     }
 
+    // ✅ New: Feedback branch
+    if (action === "feedback") {
+      const { feedbackText = "", rating = 0 } = req.body;
+
+      if (!feedbackText) {
+        return res.status(400).json({ error: "feedbackText is required" });
+      }
+
+      const { error } = await supabaseAdmin
+        .from("feedback")
+        .insert([{ user_id: userId, feedback_text: feedbackText, rating: Number(rating) }]);
+
+      if (error) {
+        console.error("Supabase insert error (feedback):", error);
+        return res.status(500).json({ error: error.message });
+      }
+
+      return res.status(200).json({ ok: true });
+    }
+
     return res.status(400).json({ error: "Unknown action" });
   } catch (e: any) {
     console.error("API error:", e);
