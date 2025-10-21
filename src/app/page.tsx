@@ -184,7 +184,6 @@ export default function Page() {
       console.error(err);
     }
   }
-
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="text-2xl font-semibold mb-6">PromptAlpha</h1>
@@ -213,144 +212,49 @@ export default function Page() {
         </div>
 
         {/* Context group */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div>
-            <label htmlFor="myRole" className="block text-sm font-medium text-gray-700">
-              My Role
-            </label>
-            <select
-              id="myRole"
-              value={myRole}
-              onChange={(e) => setMyRole(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {myRoleOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* ... your existing form code unchanged ... */}
 
-          <div>
-            <label htmlFor="aiRole" className="block text-sm font-medium text-gray-700">
-              AI Role
-            </label>
-            <select
-              id="aiRole"
-              value={aiRole}
-              onChange={(e) => setAiRole(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {aiRoleOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Actions */}
+        <div className="flex flex-wrap items-center gap-3">
+          <button type="submit" className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700">
+            Generate prompt
+          </button>
+          <button type="button" onClick={handleSave} className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">
+            Save
+          </button>
+          <button type="button" onClick={handleShare} className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50">
+            Share
+          </button>
+          <button type="button"
+            return (
+    <main className="mx-auto max-w-3xl px-4 py-8">
+      <h1 className="text-2xl font-semibold mb-6">PromptAlpha</h1>
 
-          <div>
-            <label htmlFor="audience" className="block text-sm font-medium text-gray-700">
-              Audience
-            </label>
-            <select
-              id="audience"
-              value={audience}
-              onChange={(e) => setAudience(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {audienceOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Output group */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div>
-            <label htmlFor="outputFormat" className="block text-sm font-medium text-gray-700">
-              Output Format
-            </label>
-            <select
-              id="outputFormat"
-              value={outputFormat}
-              onChange={(e) => setOutputFormat(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {outputFormatOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Constraints */}
+      <form onSubmit={handleGeneratePrompt}>
+        {/* Custom Need */}
         <div className="mb-6">
-          <label htmlFor="constraints" className="block text-sm font-medium text-gray-700">
-            Constraints (optional)
+          <label
+            htmlFor="customNeed"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Custom Need
           </label>
+          <p className="text-xs text-gray-500 mb-2">
+            Describe what you want the AI to do. Be specific about goals and constraints.
+          </p>
           <textarea
-            id="constraints"
-            rows={3}
-            value={constraints}
-            onChange={(e) => setConstraints(e.target.value)}
+            id="customNeed"
+            rows={4}
+            value={customNeed}
+            onChange={(e) => setCustomNeed(e.target.value)}
             className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-            placeholder="E.g., 200–300 words, include a CTA, avoid jargon, use bullet points."
+            placeholder="Example: Write a persuasive email to a prospective client about our new feature..."
+            required
           />
         </div>
 
-        {/* Advanced options */}
-        <details className="mb-6">
-          <summary className="cursor-pointer font-medium">Advanced options</summary>
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={seoFriendly}
-                onChange={(e) => setSeoFriendly(e.target.checked)}
-              />
-              <span>SEO friendly</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={includeReferences}
-                onChange={(e) => setIncludeReferences(e.target.checked)}
-              />
-              <span>Include references</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={structuredOutput}
-                onChange={(e) => setStructuredOutput(e.target.checked)}
-              />
-              <span>Structured output</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={avoidPitfalls}
-                onChange={(e) => setAvoidPitfalls(e.target.checked)}
-              />
-              <span>Avoid pitfalls (jargon, fluff)</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={complianceMode}
-                onChange={(e) => setComplianceMode(e.target.checked)}
-              />
-              <span>Compliance mode (conservative claims)</span>
-            </label>
-          </div>
-        </details>
+        {/* Context group */}
+        {/* ... keep your existing form code here unchanged ... */}
 
         {/* Actions */}
         <div className="flex flex-wrap items-center gap-3">
@@ -383,6 +287,7 @@ export default function Page() {
           </button>
         </div>
       </form>
+
       {/* Generated prompt output */}
       {generatedPrompt && (
         <div className="mt-8 rounded-md border border-gray-200 p-4 bg-gray-50">
@@ -463,6 +368,93 @@ export default function Page() {
           </div>
         </div>
       )}
+
+      {/* 👇 Added TestShareFeedback component at the bottom */}
+      <TestShareFeedback />
     </main>
   );
 }
+
+/* -------------------------------------------
+   TestShareFeedback Component
+   ------------------------------------------- */
+function TestShareFeedback() {
+  const [promptText, setPromptText] = useState("");
+  const [sharedId, setSharedId] = useState<string | null>(null);
+  const [message, setMessage] = useState("");
+
+  async function sharePrompt() {
+    setMessage("Sharing...");
+    const res = await fetch("/api/prompts?action=share", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-demo-email": "you@example.com", // TEMP for testing
+      },
+      body: JSON.stringify({ promptText }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setMessage("Share failed: " + (data?.error || "Unknown error"));
+      return;
+    }
+    setSharedId(data.id);
+    setMessage("Shared! ID = " + data.id);
+  }
+
+  async function sendFeedback() {
+    if (!sharedId) {
+      setMessage("Share first to get an ID.");
+      return;
+    }
+    setMessage("Submitting feedback...");
+    const res = await fetch("/api/prompts?action=feedback", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-demo-email": "you@example.com", // TEMP for testing
+      },
+      body: JSON.stringify({
+        feedbackText: "Loved this prompt!",
+        rating: 5,
+        promptId: sharedId,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      setMessage("Feedback failed: " + (data?.error || "Unknown error"));
+      return;
+    }
+    setMessage("Feedback submitted!");
+  }
+
+  return (
+    <div style={{ padding: 16, border: "1px solid #ccc", marginTop: 24 }}>
+      <h2 className="text-lg font-semibold mb-2">Test Share & Feedback</h2>
+      <textarea
+        placeholder="Type any prompt text"
+        value={promptText}
+        onChange={(e) => setPromptText(e.target.value)}
+        rows={4}
+        style={{ width: "100%" }}
+      />
+      <div style={{ marginTop: 8 }}>
+        <button
+          onClick={sharePrompt}
+          className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+        >
+          Share prompt
+        </button>
+        <button
+          onClick={sendFeedback}
+          className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50 ml-2"
+        >
+          Submit feedback
+        </button>
+      </div>
+      <div style={{ marginTop: 12, color: "#444" }}>{message}</div>
+      {sharedId && <div>Shared Prompt ID: {sharedId}</div>}
+    </div>
+  );
+}
+    
