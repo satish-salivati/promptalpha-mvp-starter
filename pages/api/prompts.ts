@@ -67,7 +67,14 @@ async function checkAndIncrementQuota(userId: string) {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { action } = req.query;
+  // Accept action from query OR body (supports varied client implementations)
+  const actionParam =
+    (typeof req.query.action === "string" ? req.query.action : "") ||
+    (typeof (req.body as any)?.action === "string" ? (req.body as any).action : "") ||
+    (typeof (req.body as any)?.body?.action === "string" ? (req.body as any).body.action : "");
+
+  console.log("prompts.ts: method =", req.method, "actionParam =", actionParam);
+  console.log("prompts.ts: env SUPABASE_URL =", process.env.NEXT_PUBLIC_SUPABASE_URL);
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -90,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // Generate a super prompt
-    if (action === "generate") {
+    if (actionParam === "generate") {
       await resetUsageIfNewDay(userId);
 
       const { allowed, used, quota } = await checkAndIncrementQuota(userId);
@@ -169,7 +176,7 @@ Constraints: ${constraints}
     }
 
     // Save a prompt
-    if (action === "save") {
+    if (actionParam === "save") {
       const raw = req.body || {};
       const flat =
         raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
@@ -183,6 +190,8 @@ Constraints: ${constraints}
         flat.text ??
         flat.content ??
         (typeof flat === "string" ? flat : "");
+
+      console.log("save: resolved promptText =", promptText);
 
       if (!promptText || typeof promptText !== "string") {
         return res.status(400).json({ error: "Missing prompt text", received: raw });
@@ -206,9 +215,9 @@ Constraints: ${constraints}
     }
 
     // Share a prompt
-    if (action === "share") {
+    if (actionParam === "share") {
       const raw = req.body || {};
-      console.log("Share request body:", JSON.stringify(raw));
+      console.log("share: request body =", JSON.stringify(raw));
 
       const flat =
         raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
@@ -223,7 +232,7 @@ Constraints: ${constraints}
         flat.content ??
         (typeof flat === "string" ? flat : "");
 
-      console.log("Share resolved promptText:", promptText);
+      console.log("share: resolved promptText =", promptText);
 
       if (!promptText || typeof promptText !== "string") {
         return res.status(400).json({ error: "Missing prompt text", received: raw });
@@ -247,7 +256,7 @@ Constraints: ${constraints}
     }
 
     // List saved prompts
-    if (action === "list") {
+    if (actionParam === "list") {
       const { data, error } = await supabaseAdmin
         .from("saved_prompts")
         .select("id, created_at, prompt_text")
@@ -263,10 +272,11 @@ Constraints: ${constraints}
     }
 
     // Feedback branch — aligned with your DB
-    if (action === "feedback") {
+    if (actionParam === "feedback") {
       const raw = req.body || {};
-      console.log("Feedback request body:", JSON.stringify(raw));
-            const flat =
+      console.log("feedback: request body =", JSON.stringify(raw));
+
+      const flat =
         raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
           ? raw.body
           : raw;
@@ -282,10 +292,10 @@ Constraints: ${constraints}
       const ratingRaw = flat.rating ?? flat.stars ?? 0;
       const rating = Number.isFinite(Number(ratingRaw)) ? Number(ratingRaw) : 0;
 
-      // Optional: link feedback to a prompt
+      // Optional: link feedback to a prompt (requires feedback.prompt_id column)
       const promptId = flat.promptId ?? null;
 
-      console.log("Feedback resolved text & rating:", feedbackText, rating, "promptId:", promptId);
+      console.log("feedback: resolved text & rating =", feedbackText, rating, "promptId =", promptId);
 
       if (!feedbackText || typeof feedbackText !== "string") {
         return res
@@ -296,12 +306,11 @@ Constraints: ${constraints}
       // Build insert object using your actual column names
       const insertObj: Record<string, any> = {
         user_id: userId,
-        feedback_text: feedbackText,  // 👈 matches your DB column
-        rating,                       // 👈 integer 1–5
+        feedback_text: feedbackText, // matches your DB column
+        rating, // integer 1–5
       };
 
-      // Only include prompt_id if you add that column to your table
-      if (promptId) insertObj.prompt_id = promptId;
+      if (promptId) insertObj.prompt_id = promptId; // only if feedback.prompt_id exists
 
       const { error } = await supabaseAdmin.from("feedback").insert([insertObj]);
 
@@ -314,10 +323,9 @@ Constraints: ${constraints}
     }
 
     // Unknown action
-    return res.status(400).json({ error: "Unknown action" });
+    return res.status(400).json({ error: "Unknown action", receivedAction: actionParam });
   } catch (e: any) {
     console.error("API error:", e);
     return res.status(500).json({ error: "Server error" });
   }
 }
-  
