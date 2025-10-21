@@ -15,9 +15,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { error } = await supabaseServer()
       .from("saved_prompts")
-      .insert([{ user_id: userId, prompt_text: promptText }]);
+      .insert([
+        {
+          user_id: userId,
+          prompt_text: promptText,
+        },
+      ]);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase insert error:", error);
+      return res.status(500).json({ error: error.message });
+    }
 
     res.status(200).json({ success: true });
   } catch (err: any) {
