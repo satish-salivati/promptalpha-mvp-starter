@@ -2,34 +2,46 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { supabaseServer } from "../../lib/supabaseServer";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+
+  const raw = req.body || {};
+  const userId =
+    raw.userId ??
+    raw.user_id ??
+    raw.user ??
+    raw.email ??
+    raw.uid ??
+    "anonymous";
+  const promptText =
+    raw.promptText ??
+    raw.prompt_text ??
+    raw.prompt ??
+    raw.text ??
+    raw.content;
+
+  if (!promptText) {
+    return res.status(400).json({
+      error: "Invalid payload: require { promptText }",
+      received: { userId, promptText },
+    });
   }
 
   try {
-    const { userId, promptText } = req.body;
-
-    if (!userId || !promptText) {
-      return res.status(400).json({ error: "Missing userId or promptText" });
-    }
-
-    const { error } = await supabaseServer()
+    const supabase = supabaseServer();
+    const { data, error } = await supabase
       .from("saved_prompts")
-      .insert([
-        {
-          user_id: userId,
-          prompt_text: promptText,
-        },
-      ]);
+      .insert([{ user_id: userId, prompt_text: promptText }])
+      .select("id, user_id, prompt_text, created_at")
+      .single();
 
     if (error) {
-      console.error("Supabase insert error:", error);
+      console.error("Supabase insert error (saved_prompts):", error);
       return res.status(500).json({ error: error.message });
     }
 
-    res.status(200).json({ success: true });
-  } catch (err: any) {
-    console.error("SavePrompt API error:", err.message);
-    res.status(500).json({ error: "Failed to save prompt" });
+    return res.status(200).json({ success: true, row: data });
+  } catch (e: any) {
+    console.error("SavePrompt API unexpected error:", e);
+    return res.status(500).json({ error: e.message ?? "Unknown error" });
   }
 }
