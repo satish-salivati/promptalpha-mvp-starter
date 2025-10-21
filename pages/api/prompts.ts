@@ -76,14 +76,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Authenticate user via NextAuth
   const session: any = await getServerSession(req, res, authOptions as any);
   const email = session?.user?.email ?? null;
-  console.log("prompts.ts: session email =", email); // LOG
+  console.log("prompts.ts: session email =", email);
   if (!email) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
   // Resolve userId via profiles table
   const userId = await getUserId(email);
-  console.log("prompts.ts: resolved userId =", userId); // LOG
+  console.log("prompts.ts: resolved userId =", userId);
   if (!userId) {
     return res.status(404).json({ error: "User not found in Supabase profiles" });
   }
@@ -168,10 +168,13 @@ Constraints: ${constraints}
       });
     }
 
-    // Save a prompt (into saved_prompts table) — tolerant of multiple frontend shapes
+    // Save a prompt
     if (action === "save") {
       const raw = req.body || {};
-      const flat = raw && typeof raw === "object" && raw.body && typeof raw.body === "object" ? raw.body : raw;
+      const flat =
+        raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
+          ? raw.body
+          : raw;
 
       const promptText =
         flat.promptText ??
@@ -201,13 +204,15 @@ Constraints: ${constraints}
 
       return res.status(200).json({ ok: true, id: data.id });
     }
-
-    // Share a prompt (into shared_prompts table) — robust payload logging
+    // Share a prompt
     if (action === "share") {
       const raw = req.body || {};
-      console.log("Share request body:", JSON.stringify(raw)); // LOG
+      console.log("Share request body:", JSON.stringify(raw));
 
-      const flat = raw && typeof raw === "object" && raw.body && typeof raw.body === "object" ? raw.body : raw;
+      const flat =
+        raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
+          ? raw.body
+          : raw;
 
       const promptText =
         flat.promptText ??
@@ -217,7 +222,7 @@ Constraints: ${constraints}
         flat.content ??
         (typeof flat === "string" ? flat : "");
 
-      console.log("Share resolved promptText:", promptText); // LOG
+      console.log("Share resolved promptText:", promptText);
 
       if (!promptText || typeof promptText !== "string") {
         return res.status(400).json({ error: "Missing prompt text", received: raw });
@@ -233,7 +238,7 @@ Constraints: ${constraints}
         .single();
 
       if (error) {
-        console.error("Supabase insert error (shared_prompts):", error); // LOG
+        console.error("Supabase insert error (shared_prompts):", error);
         return res.status(500).json({ error: error.message });
       }
 
@@ -256,29 +261,51 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, prompts: data ?? [] });
     }
 
-    // Feedback branch — robust payload logging
+    // Feedback branch — now accepts "comments" and "promptId"
     if (action === "feedback") {
       const raw = req.body || {};
-      console.log("Feedback request body:", JSON.stringify(raw)); // LOG
+      console.log("Feedback request body:", JSON.stringify(raw));
 
-      const flat = raw && typeof raw === "object" && raw.body && typeof raw.body === "object" ? raw.body : raw;
+      const flat =
+        raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
+          ? raw.body
+          : raw;
 
-      const feedbackText = flat.feedbackText ?? flat.feedback ?? flat.text ?? "";
+      // Accept multiple possible keys, including "comments"
+      const feedbackText =
+        flat.feedbackText ??
+        flat.feedback ??
+        flat.text ??
+        flat.comments ?? // from your frontend payload
+        "";
+
       const ratingRaw = flat.rating ?? flat.stars ?? 0;
       const rating = Number.isFinite(Number(ratingRaw)) ? Number(ratingRaw) : 0;
 
-      console.log("Feedback resolved text & rating:", feedbackText, rating); // LOG
+      // Optional: link feedback to a prompt
+      const promptId = flat.promptId ?? null;
+
+      console.log("Feedback resolved text & rating:", feedbackText, rating, "promptId:", promptId);
 
       if (!feedbackText || typeof feedbackText !== "string") {
-        return res.status(400).json({ error: "feedbackText is required", received: raw });
+        return res
+          .status(400)
+          .json({ error: "feedbackText/comments is required", received: raw });
       }
 
-      const { error } = await supabaseAdmin
-        .from("feedback")
-        .insert([{ user_id: userId, feedback_text: feedbackText, rating }]);
+      // Build insert object
+      const insertObj: Record<string, any> = {
+        user_id: userId,
+        feedback_text: feedbackText,
+        rating,
+      };
+      // Include prompt_id only if your feedback table has this column
+      if (promptId) insertObj.prompt_id = promptId;
+
+      const { error } = await supabaseAdmin.from("feedback").insert([insertObj]);
 
       if (error) {
-        console.error("Supabase insert error (feedback):", error); // LOG
+        console.error("Supabase insert error (feedback):", error);
         return res.status(500).json({ error: error.message });
       }
 
