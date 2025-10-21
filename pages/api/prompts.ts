@@ -204,6 +204,7 @@ Constraints: ${constraints}
 
       return res.status(200).json({ ok: true, id: data.id });
     }
+
     // Share a prompt
     if (action === "share") {
       const raw = req.body || {};
@@ -261,7 +262,7 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, prompts: data ?? [] });
     }
 
-    // Feedback branch — now accepts "comments" and "promptId"
+        // Feedback branch — aligned with your DB
     if (action === "feedback") {
       const raw = req.body || {};
       console.log("Feedback request body:", JSON.stringify(raw));
@@ -272,11 +273,11 @@ Constraints: ${constraints}
           : raw;
 
       // Accept multiple possible keys, including "comments"
-      const feedbackText =
+      const comments =
+        flat.comments ??
         flat.feedbackText ??
         flat.feedback ??
         flat.text ??
-        flat.comments ?? // from your frontend payload
         "";
 
       const ratingRaw = flat.rating ?? flat.stars ?? 0;
@@ -285,21 +286,22 @@ Constraints: ${constraints}
       // Optional: link feedback to a prompt
       const promptId = flat.promptId ?? null;
 
-      console.log("Feedback resolved text & rating:", feedbackText, rating, "promptId:", promptId);
+      console.log("Feedback resolved comments & rating:", comments, rating, "promptId:", promptId);
 
-      if (!feedbackText || typeof feedbackText !== "string") {
+      if (!comments || typeof comments !== "string") {
         return res
           .status(400)
-          .json({ error: "feedbackText/comments is required", received: raw });
+          .json({ error: "comments are required", received: raw });
       }
 
-      // Build insert object
+      // Build insert object using your actual column names
       const insertObj: Record<string, any> = {
         user_id: userId,
-        feedback_text: feedbackText,
-        rating,
+        text: comments,   // 👈 matches your DB column
+        rating,           // 👈 integer 1–5
       };
-      // Include prompt_id only if your feedback table has this column
+
+      // Only include prompt_id if you add that column to your table
       if (promptId) insertObj.prompt_id = promptId;
 
       const { error } = await supabaseAdmin.from("feedback").insert([insertObj]);
