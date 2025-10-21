@@ -1,100 +1,235 @@
-// src/pages/api/prompts.ts
+// pages/api/prompts.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import OpenAI from "openai";
+import { createClient } from "@supabase/supabase-js";
+import { getServerSession } from "next-auth";
+// IMPORTANT: Update this path to your actual auth options export
+import authOptions from "./auth-options"; // e.g., "../../pages/api/auth/[...nextauth]"
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // server-only
+);
 
-// Helper to build a prompt string from the payload
-function buildPrompt(payload: any) {
-  const {
-    customNeed = "",
-    persona = "",
-    role = "",
-    audience = "",
-    outputFormat = "",
-    length = "",
-    style = "",
-    tone = "",
-    constraints = "",
-    advanced = {},
-  } = payload || {};
+// Helper: get current user_id from Supabase profiles by session email
+async function getUserId(email: string | null | undefined): Promise<string | null> {
+  if (!email) return null;
+  const { data, error } = await supabaseAdmin
+    .from("profiles")
+    .select("id")
+    .eq("email", email)
+    .single();
+  if (error || !data?.id) return null;
+  return data.id;
+}
 
-  return `
-You are acting as a ${role} helping a ${persona}.
-Your audience is: ${audience}.
-The required output format is: ${outputFormat}.
-Length: ${length}.
-Style: ${style}.
-Tone: ${tone}.
-${constraints ? `Constraints: ${constraints}` : ""}
+// Helper: reset daily usage if a new day
+async function resetUsageIfNewDay(userId: string) {
+  const { data: limit } = await supabaseAdmin
+    .from("usage_limits")
+    .select("last_reset_date, used_today")
+    .eq("user_id", userId)
+    .single();
 
-Advanced options:
-- SEO Friendly: ${advanced?.seoFriendly ? "Yes" : "No"}
-- Include References: ${advanced?.includeReferences ? "Yes" : "No"}
-- Structured Output: ${advanced?.structuredOutput ? "Yes" : "No"}
-- Avoid Pitfalls: ${advanced?.avoidPitfalls ? "Yes" : "No"}
-- Compliance Mode: ${advanced?.complianceMode ? "Yes" : "No"}
+  const lastReset = limit?.last_reset_date ? new Date(limit.last_reset_date) : null;
+  const today = new Date();
+  const isNewDay =
+    !lastReset ||
+    lastReset.getUTCFullYear() !== today.getUTCFullYear() ||
+    lastReset.getUTCMonth() !== today.getUTCMonth() ||
+    lastReset.getUTCDate() !== today.getUTCDate();
 
-Task: ${customNeed}
+  if (isNewDay) {
+    await supabaseAdmin
+      .from("usage_limits")
+      .update({ used_today: 0, last_reset_date: new Date().toISOString().slice(0, 10) })
+      .eq("user_id", userId);
+  }
+}
 
-Please generate the best possible draft for this request.
-  `;
+// Helper: ensure a usage row exists, and check quota
+async function checkAndIncrementQuota(userId: string) {
+  // Ensure row exists
+  const { data: current, error: fetchErr } = await supabaseAdmin
+    .from("usage_limits")
+    .select("daily_quota, used_today")
+    .eq("user_id", userId)
+    .single();
+
+  if (fetchErr && fetchErr.code === "PGRST116") {
+    // No row: initialize with defaults
+    await supabaseAdmin
+      .from("usage_limits")
+      .insert({ user_id: userId, daily_quota: 10, used_today: 0 });
+  }
+
+  // Re-fetch after potential insert
+  const { data: limit } = await supabaseAdmin
+    .from("usage_limits")
+    .select("daily_quota, used_today")
+    .eq("user_id", userId)
+    .single();
+
+  const used = limit?.used_today ?? 0;
+  const quota = limit?.daily_quota ?? 10;
+
+  if (used >= quota) {
+    return { allowed: false, used, quota };
+  }
+
+  // Increment usage
+  await supabaseAdmin
+    .from("usage_limits")
+    .update({ used_today: used + 1 })
+    .eq("user_id", userId);
+
+  return { allowed: true, used: used + 1, quota };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const action = req.query.action as string;
+  const { action } = req.query;
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  // Authenticate user via NextAuth
+  const session = await getServerSession(req, res, authOptions as any);
+  const email = session?.user?.email ?? null;
+  if (!email) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  // Resolve userId
+  const userId = await getUserId(email);
+  if (!userId) {
+    return res.status(404).json({ error: "User not found in Supabase profiles" });
+  }
 
   try {
-    if (req.method === "POST") {
-      const body = req.body ?? {};
+    // Generate a super prompt via OpenAI with usage caps
+    if (action === "generate") {
+      // Reset daily counters if needed
+      await resetUsageIfNewDay(userId);
 
-      switch (action) {
-        case "generate": {
-          const userPrompt = buildPrompt(body);
-
-          const completion = await openai.chat.completions.create({
-            model: "gpt-4o-mini", // you can also use "gpt-4o" or "gpt-3.5-turbo"
-            messages: [{ role: "user", content: userPrompt }],
-          });
-
-          const generatedPrompt = completion.choices[0].message?.content || "";
-          return res.status(200).json({ ok: true, generatedPrompt });
-        }
-
-        case "save": {
-          const id = `prompt_${Date.now()}`;
-          return res.status(200).json({ ok: true, id });
-        }
-
-        case "share": {
-          const id = body?.id ?? `prompt_${Date.now()}`;
-          const url = `https://promptalpha-mvp-starter.vercel.app/shared/${id}`;
-          return res.status(200).json({ ok: true, url });
-        }
-
-        case "feedback": {
-          const { rating, comments, promptId } = body || {};
-          if (!promptId) {
-            return res.status(400).json({ ok: false, error: "Missing promptId" });
-          }
-          return res.status(200).json({ ok: true });
-        }
-
-        default:
-          return res.status(400).json({ ok: false, error: "Unknown action" });
+      // Check quota and increment usage atomically
+      const { allowed, used, quota } = await checkAndIncrementQuota(userId);
+      if (!allowed) {
+        return res
+          .status(429)
+          .json({ error: `Daily generation limit reached (${quota}/day). Try again tomorrow.` });
       }
+
+      const body = req.body;
+      const {
+        customNeed = "",
+        persona = "",
+        role = "",
+        audience = "",
+        outputFormat = "",
+        length = "",
+        style = "",
+        tone = "",
+        constraints = "",
+        model = process.env.MODEL_NAME ?? "gpt-4o-mini",
+      } = body;
+
+      // Build a deterministic instruction wrapper
+      const userPrompt = `
+You are a prompt engineering assistant. Convert the user's request into a structured, reusable super prompt.
+Follow this format:
+- Objective
+- Requirements (What, Why/Need, Market, Potential, Problem it Solves, Revenue, End Users, Additional Info)
+Be explicit, concise, and professional. Avoid filler. Ensure completeness.
+
+User request:
+Custom Need: ${customNeed}
+Persona: ${persona}
+AI Role: ${role}
+Audience: ${audience}
+Output Format: ${outputFormat}
+Length: ${length}
+Style: ${style}
+Tone: ${tone}
+Constraints: ${constraints}
+      `.trim();
+
+      // Call OpenAI Chat Completions
+      const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are a senior prompt engineer. You transform vague requests into clear, structured super prompts that are reusable and comprehensive.",
+            },
+            { role: "user", content: userPrompt },
+          ],
+          temperature: 0.3,
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.text();
+        return res.status(resp.status).json({ error: err });
+      }
+
+      const data = await resp.json();
+      const generated = data.choices?.[0]?.message?.content?.trim() || "";
+
+      return res.status(200).json({
+        ok: true,
+        generatedPrompt: generated,
+        usage: { usedToday: used, dailyQuota: quota },
+      });
     }
 
-    // GET health check
-    return res.status(200).json({ ok: true, route: "/api/prompts", action });
-  } catch (err: any) {
-    console.error("API error:", err);
-    return res.status(500).json({
-      ok: false,
-      error: err.message || "Server error",
-      stack: err.stack || null,
-    });
+    // Save a prompt for the current user
+    if (action === "save") {
+      const { inputText = "", generatedPrompt = "", model = "gpt-4o-mini" } = req.body;
+
+      if (!generatedPrompt) {
+        return res.status(400).json({ error: "generatedPrompt is required" });
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from("prompts")
+        .insert({
+          user_id: userId,
+          input_text: inputText,
+          generated_prompt: generatedPrompt,
+          model,
+        })
+        .select("id")
+        .single();
+
+      if (error) return res.status(400).json({ error: error.message });
+
+      return res.status(200).json({ ok: true, id: data.id });
+    }
+
+    // List saved prompts for the current user
+    if (action === "list") {
+      const { data, error } = await supabaseAdmin
+        .from("prompts")
+        .select("id, created_at, input_text, generated_prompt, model")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (error) return res.status(400).json({ error: error.message });
+
+      return res.status(200).json({ ok: true, prompts: data ?? [] });
+    }
+
+    return res.status(400).json({ error: "Unknown action" });
+  } catch (e: any) {
+    console.error("API error:", e);
+    return res.status(500).json({ error: "Server error" });
   }
 }
