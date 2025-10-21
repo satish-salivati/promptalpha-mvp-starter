@@ -262,9 +262,9 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, prompts: data ?? [] });
     }
 
-        // Feedback branch — aligned with your DB
+    // Feedback branch — aligned with your DB
     if (action === "feedback") {
-      const raw = req.body || {};
+            const raw = req.body || {};
       console.log("Feedback request body:", JSON.stringify(raw));
 
       const flat =
@@ -273,10 +273,10 @@ Constraints: ${constraints}
           : raw;
 
       // Accept multiple possible keys, including "comments"
-      const comments =
-        flat.comments ??
+      const feedbackText =
         flat.feedbackText ??
         flat.feedback ??
+        flat.comments ?? // from your frontend payload
         flat.text ??
         "";
 
@@ -286,19 +286,19 @@ Constraints: ${constraints}
       // Optional: link feedback to a prompt
       const promptId = flat.promptId ?? null;
 
-      console.log("Feedback resolved comments & rating:", comments, rating, "promptId:", promptId);
+      console.log("Feedback resolved text & rating:", feedbackText, rating, "promptId:", promptId);
 
-      if (!comments || typeof comments !== "string") {
+      if (!feedbackText || typeof feedbackText !== "string") {
         return res
           .status(400)
-          .json({ error: "comments are required", received: raw });
+          .json({ error: "feedbackText/comments is required", received: raw });
       }
 
       // Build insert object using your actual column names
       const insertObj: Record<string, any> = {
         user_id: userId,
-        text: comments,   // 👈 matches your DB column
-        rating,           // 👈 integer 1–5
+        feedback_text: feedbackText,  // 👈 matches your DB column
+        rating,                       // 👈 integer 1–5
       };
 
       // Only include prompt_id if you add that column to your table
