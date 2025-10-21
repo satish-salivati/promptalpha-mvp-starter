@@ -87,11 +87,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Generate a super prompt via OpenAI with usage caps
+    // Generate a super prompt
     if (action === "generate") {
       await resetUsageIfNewDay(userId);
 
-      // Quota check now always allows
       const { allowed, used, quota } = await checkAndIncrementQuota(userId);
       if (!allowed) {
         return res
@@ -167,21 +166,19 @@ Constraints: ${constraints}
       });
     }
 
-    // Save a prompt for the current user
+    // Save a prompt (into saved_prompts table)
     if (action === "save") {
-      const { inputText = "", generatedPrompt = "", model = "gpt-4o-mini" } = req.body;
+      const { promptText = "" } = req.body;
 
-      if (!generatedPrompt) {
-        return res.status(400).json({ error: "generatedPrompt is required" });
+      if (!promptText) {
+        return res.status(400).json({ error: "promptText is required" });
       }
 
       const { data, error } = await supabaseAdmin
-        .from("prompts")
+        .from("saved_prompts")
         .insert({
           user_id: userId,
-          input_text: inputText,
-          generated_prompt: generatedPrompt,
-          model,
+          prompt_text: promptText,
         })
         .select("id")
         .single();
@@ -191,11 +188,11 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, id: data.id });
     }
 
-    // List saved prompts for the current user
+    // List saved prompts
     if (action === "list") {
       const { data, error } = await supabaseAdmin
-        .from("prompts")
-        .select("id, created_at, input_text, generated_prompt, model")
+        .from("saved_prompts")
+        .select("id, created_at, prompt_text")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(50);
@@ -205,7 +202,7 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, prompts: data ?? [] });
     }
 
-    // ✅ New: Feedback branch
+    // Feedback branch
     if (action === "feedback") {
       const { feedbackText = "", rating = 0 } = req.body;
 
