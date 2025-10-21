@@ -27,23 +27,48 @@ export default function Page() {
   // NEW state for linking feedback to a saved prompt
   const [promptId, setPromptId] = useState<string | null>(null);
 
+  // Test prompt state
   const [isTesting, setIsTesting] = useState(false);
   const [testOutput, setTestOutput] = useState("");
 
   // Options
-  const myRoleOptions = [ "Founder","CEO / Executive","HR Manager","Recruiter / Talent Partner","Product Manager","Project Manager","Sales Lead / AE","Customer Success","Marketing Manager","Content Creator","Educator / Trainer","Student","Researcher / Analyst","Operations Manager","Engineer (Non-ML)" ];
+  const myRoleOptions = [
+    "Founder","CEO / Executive","HR Manager","Recruiter / Talent Partner",
+    "Product Manager","Project Manager","Sales Lead / AE","Customer Success",
+    "Marketing Manager","Content Creator","Educator / Trainer","Student",
+    "Researcher / Analyst","Operations Manager","Engineer (Non-ML)"
+  ];
 
-  const aiRoleOptions = [ "Copywriter","Editor","Strategist","Analyst","Researcher","Recruiter","Tutor","Assistant","Summarizer","Planner","Scriptwriter","UX Writer","Technical Writer","Email Composer","Social Media Manager" ];
+  const aiRoleOptions = [
+    "Copywriter","Editor","Strategist","Analyst","Researcher","Recruiter","Tutor",
+    "Assistant","Summarizer","Planner","Scriptwriter","UX Writer","Technical Writer",
+    "Email Composer","Social Media Manager"
+  ];
 
-  const audienceOptions = [ "General Public","Prospective Customers","Existing Customers","Executives","Managers","Employees","Partners","Investors","Students","Practitioners / Peers" ];
+  const audienceOptions = [
+    "General Public","Prospective Customers","Existing Customers","Executives","Managers",
+    "Employees","Partners","Investors","Students","Practitioners / Peers"
+  ];
 
-  const outputFormatOptions = [ "Email","Blog Post","LinkedIn Post","Tweet Thread","Report","Brief / One-pager","Slide Outline","Product Spec","FAQ","Press Release","Case Study","User Story","Job Description","Interview Questions","Checklist" ];
+  const outputFormatOptions = [
+    "Email","Blog Post","LinkedIn Post","Tweet Thread","Report","Brief / One-pager",
+    "Slide Outline","Product Spec","FAQ","Press Release","Case Study","User Story",
+    "Job Description","Interview Questions","Checklist"
+  ];
 
-  const lengthOptions = [ "Very short (50–100 words)","Short (100–200 words)","Medium (300–500 words)","Long (800–1200 words)","Extended (1500+ words)" ];
+  const lengthOptions = [
+    "Very short (50–100 words)","Short (100–200 words)","Medium (300–500 words)",
+    "Long (800–1200 words)","Extended (1500+ words)"
+  ];
 
-  const styleOptions = [ "Formal","Casual","Persuasive","Storytelling","Technical","Analytical","Instructional","Conversational","Executive-ready","Bullet-heavy" ];
+  const styleOptions = [
+    "Formal","Casual","Persuasive","Storytelling","Technical","Analytical",
+    "Instructional","Conversational","Executive-ready","Bullet-heavy"
+  ];
 
-  const toneOptions = [ "Neutral","Friendly","Confident","Empathetic","Direct","Inspirational","Data-driven","Urgent" ];
+  const toneOptions = [
+    "Neutral","Friendly","Confident","Empathetic","Direct","Inspirational","Data-driven","Urgent"
+  ];
 
   // Helper to build the payload
   function buildPayload() {
@@ -137,9 +162,7 @@ export default function Page() {
 
   async function handleGeneratePrompt(e: React.FormEvent) {
     e.preventDefault();
-    console.log("Handler start");
     const payload = buildPayload();
-    console.log("Payload:", payload);
 
     try {
       const res = await fetch("/api/prompts?action=generate", {
@@ -148,23 +171,20 @@ export default function Page() {
         body: JSON.stringify(payload),
       });
 
-      console.log("Fetch status:", res.status);
-
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        console.error("API returned error:", errData);
         alert(errData?.error || "Something went wrong generating the prompt.");
         return;
       }
 
       const data = await res.json();
-      console.log("API response:", data);
       setGeneratedPrompt(data.generatedPrompt || "");
     } catch (err) {
-      console.error("Fetch threw:", err);
       alert("Network error. See console for details.");
+      console.error(err);
     }
   }
+
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="text-2xl font-semibold mb-6">PromptAlpha</h1>
@@ -179,8 +199,7 @@ export default function Page() {
             Custom Need
           </label>
           <p className="text-xs text-gray-500 mb-2">
-            Describe what you want the AI to do. Be specific about goals and
-            constraints.
+            Describe what you want the AI to do. Be specific about goals and constraints.
           </p>
           <textarea
             id="customNeed"
@@ -196,10 +215,7 @@ export default function Page() {
         {/* Context group */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div>
-            <label
-              htmlFor="myRole"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="myRole" className="block text-sm font-medium text-gray-700">
               My Role
             </label>
             <select
@@ -217,10 +233,7 @@ export default function Page() {
           </div>
 
           <div>
-            <label
-              htmlFor="aiRole"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="aiRole" className="block text-sm font-medium text-gray-700">
               AI Role
             </label>
             <select
@@ -238,10 +251,7 @@ export default function Page() {
           </div>
 
           <div>
-            <label
-              htmlFor="audience"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="audience" className="block text-sm font-medium text-gray-700">
               Audience
             </label>
             <select
@@ -262,10 +272,7 @@ export default function Page() {
         {/* Output group */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div>
-            <label
-              htmlFor="outputFormat"
-              className="block text-sm font-medium text-gray-700"
-            >
+            <label htmlFor="outputFormat" className="block text-sm font-medium text-gray-700">
               Output Format
             </label>
             <select
@@ -285,10 +292,7 @@ export default function Page() {
 
         {/* Constraints */}
         <div className="mb-6">
-          <label
-            htmlFor="constraints"
-            className="block text-sm font-medium text-gray-700"
-          >
+          <label htmlFor="constraints" className="block text-sm font-medium text-gray-700">
             Constraints (optional)
           </label>
           <textarea
@@ -303,9 +307,7 @@ export default function Page() {
 
         {/* Advanced options */}
         <details className="mb-6">
-          <summary className="cursor-pointer font-medium">
-            Advanced options
-          </summary>
+          <summary className="cursor-pointer font-medium">Advanced options</summary>
           <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
             <label className="flex items-center gap-2">
               <input
@@ -381,109 +383,86 @@ export default function Page() {
           </button>
         </div>
       </form>
+      {/* Generated prompt output */}
+      {generatedPrompt && (
+        <div className="mt-8 rounded-md border border-gray-200 p-4 bg-gray-50">
+          <h2 className="text-lg font-semibold mb-2">Generated Prompt</h2>
+          <pre className="whitespace-pre-wrap text-sm">{generatedPrompt}</pre>
 
-{/* Generated prompt output */}
-{generatedPrompt && (
-  <div className="mt-8 rounded-md border border-gray-200 p-4 bg-gray-50">
-    <h2 className="text-lg font-semibold mb-2">Generated Prompt</h2>
-    <pre className="whitespace-pre-wrap text-sm">{generatedPrompt}</pre>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={handleCopyPrompt}
+              className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
+            >
+              Copy
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadPrompt}
+              className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
+            >
+              Download
+            </button>
+          </div>
 
-    <div className="mt-4 flex flex-wrap gap-3">
-      <button
-        type="button"
-        onClick={handleCopyPrompt}
-        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
-      >
-        Copy
-      </button>
-      <button
-        type="button"
-        onClick={handleDownloadPrompt}
-        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
-      >
-        Download
-      </button>
-    </div>
+          {/* Why this is a super prompt */}
+          <div className="mt-6 p-4 border rounded bg-white">
+            <h3 className="text-lg font-semibold mb-2">Why this is a super prompt</h3>
+            <p className="text-sm text-gray-700">This prompt was enhanced by:</p>
+            <ul className="list-disc list-inside text-sm text-gray-700 mt-2">
+              <li>Adding clear role/context instructions (e.g. “Act as a …”).</li>
+              <li>Specifying output format and tone for consistency.</li>
+              <li>Breaking down the task into structured steps.</li>
+              <li>Including constraints to avoid vague or generic answers.</li>
+              <li>Optimizing wording for LLM interpretability.</li>
+            </ul>
+            <p className="text-sm text-gray-700 mt-2">
+              Compared to a regular prompt, this “super prompt” is explicit, structured, and reusable.
+            </p>
+          </div>
 
-  {/* Generated prompt output */}
-{generatedPrompt && (
-  <div className="mt-8 rounded-md border border-gray-200 p-4 bg-gray-50">
-    <h2 className="text-lg font-semibold mb-2">Generated Prompt</h2>
-    <pre className="whitespace-pre-wrap text-sm">{generatedPrompt}</pre>
+          {/* Test Prompt button + output */}
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={async () => {
+                setIsTesting(true);
+                setTestOutput("");
+                try {
+                  const res = await fetch("/api/testPrompt", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ prompt: generatedPrompt }),
+                  });
+                  const data = await res.json();
+                  setTestOutput(data.output);
+                } catch (err) {
+                  setTestOutput("Error testing prompt.");
+                } finally {
+                  setIsTesting(false);
+                }
+              }}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Test Prompt
+            </button>
 
-    <div className="mt-4 flex flex-wrap gap-3">
-      <button
-        type="button"
-        onClick={handleCopyPrompt}
-        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
-      >
-        Copy
-      </button>
-      <button
-        type="button"
-        onClick={handleDownloadPrompt}
-        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
-      >
-        Download
-      </button>
-    </div>
+            {isTesting && (
+              <p className="mt-2 text-sm text-gray-500">Running prompt...</p>
+            )}
 
-    {/* Why this is a super prompt */}
-    <div className="mt-6 p-4 border rounded bg-white">
-      <h3 className="text-lg font-semibold mb-2">Why this is a super prompt</h3>
-      <p className="text-sm text-gray-700">This prompt was enhanced by:</p>
-      <ul className="list-disc list-inside text-sm text-gray-700 mt-2">
-        <li>Adding clear role/context instructions (e.g. “Act as a …”).</li>
-        <li>Specifying output format and tone for consistency.</li>
-        <li>Breaking down the task into structured steps.</li>
-        <li>Including constraints to avoid vague or generic answers.</li>
-        <li>Optimizing wording for LLM interpretability.</li>
-      </ul>
-      <p className="text-sm text-gray-700 mt-2">
-        Compared to a regular prompt, this “super prompt” is explicit, structured, and reusable.
-      </p>
-    </div>
-
-    {/* Test Prompt button + output */}
-    <div className="mt-6">
-      <button
-        type="button"
-        onClick={async () => {
-          setIsTesting(true);
-          setTestOutput("");
-          try {
-            const res = await fetch("/api/testPrompt", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ prompt: generatedPrompt }),
-            });
-            const data = await res.json();
-            setTestOutput(data.output);
-          } catch (err) {
-            setTestOutput("Error testing prompt.");
-          } finally {
-            setIsTesting(false);
-          }
-        }}
-        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-      >
-        Test Prompt
-      </button>
-
-      {isTesting && (
-        <p className="mt-2 text-sm text-gray-500">Running prompt...</p>
-      )}
-
-      {testOutput && (
-        <div className="mt-4 p-4 border rounded bg-white">
-          <h3 className="text-lg font-semibold mb-2">Test Output</h3>
-          <pre className="whitespace-pre-wrap text-sm text-gray-800">
-            {testOutput}
-          </pre>
+            {testOutput && (
+              <div className="mt-4 p-4 border rounded bg-white">
+                <h3 className="text-lg font-semibold mb-2">Test Output</h3>
+                <pre className="whitespace-pre-wrap text-sm text-gray-800">
+                  {testOutput}
+                </pre>
+              </div>
+            )}
+          </div>
         </div>
       )}
-    </div>
-  </div>
-)}
-</main>
+    </main>
+  );
 }
