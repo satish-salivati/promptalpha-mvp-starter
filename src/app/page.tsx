@@ -226,8 +226,7 @@ export default function Page() {
             Share
           </button>
           <button type="button"
-            return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+        <main className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="text-2xl font-semibold mb-6">PromptAlpha</h1>
 
       <form onSubmit={handleGeneratePrompt}>
