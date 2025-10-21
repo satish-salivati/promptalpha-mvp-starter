@@ -2,15 +2,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "next-auth";
-// IMPORTANT: Update this path to your actual auth options export
-import authOptions from "./auth-options"; // e.g., "../../pages/api/auth/[...nextauth]"
+import authOptions from "./auth-options";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // server-only
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Helper: get current user_id from Supabase profiles by session email
 async function getUserId(email: string | null | undefined): Promise<string | null> {
   if (!email) return null;
   const { data, error } = await supabaseAdmin
@@ -22,7 +20,6 @@ async function getUserId(email: string | null | undefined): Promise<string | nul
   return data.id;
 }
 
-// Helper: reset daily usage if a new day
 async function resetUsageIfNewDay(userId: string) {
   const { data: limit } = await supabaseAdmin
     .from("usage_limits")
@@ -46,8 +43,6 @@ async function resetUsageIfNewDay(userId: string) {
   }
 }
 
-// Helper: ensure a usage row exists, and check quota
-// ⚠️ For testing: always allow
 async function checkAndIncrementQuota(userId: string) {
   const { error: fetchErr } = await supabaseAdmin
     .from("usage_limits")
@@ -71,24 +66,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Authenticate user via NextAuth
   const session: any = await getServerSession(req, res, authOptions as any);
   const email = session?.user?.email ?? null;
   if (!email) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
-  // Resolve userId
   const userId = await getUserId(email);
   if (!userId) {
     return res.status(404).json({ error: "User not found in Supabase profiles" });
   }
 
   try {
-    // Generate a super prompt
+    // Generate
     if (action === "generate") {
       await resetUsageIfNewDay(userId);
-
       const { allowed, used, quota } = await checkAndIncrementQuota(userId);
       if (!allowed) {
         return res
@@ -164,16 +156,18 @@ Constraints: ${constraints}
       });
     }
 
-    // Save a prompt (into saved_prompts table) — tolerant of multiple frontend keys
+    // Save
     if (action === "save") {
       const raw = req.body || {};
+      const flat = raw.body && typeof raw.body === "object" ? raw.body : raw;
+
       const promptText =
-        raw.promptText ??
-        raw.generatedPrompt ??
-        raw.prompt ??
-        raw.text ??
-        raw.content ??
-        (typeof raw === "string" ? raw : "");
+        flat.promptText ??
+        flat.generatedPrompt ??
+        flat.prompt ??
+        flat.text ??
+        flat.content ??
+        (typeof flat === "string" ? flat : "");
 
       if (!promptText || typeof promptText !== "string") {
         return res.status(400).json({ error: "Missing prompt text", received: raw });
@@ -181,10 +175,7 @@ Constraints: ${constraints}
 
       const { data, error } = await supabaseAdmin
         .from("saved_prompts")
-        .insert({
-          user_id: userId,
-          prompt_text: promptText,
-        })
+        .insert({ user_id: userId, prompt_text: promptText })
         .select("id")
         .single();
 
@@ -196,7 +187,38 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, id: data.id });
     }
 
-    // List saved prompts
+    // Share
+    if (action === "share") {
+      const raw = req.body || {};
+      const flat = raw.body && typeof raw.body === "object" ? raw.body : raw;
+
+      const promptText =
+        flat.promptText ??
+        flat.generatedPrompt ??
+        flat.prompt ??
+        flat.text ??
+        flat.content ??
+        (typeof flat === "string" ? flat : "");
+
+      if (!promptText || typeof promptText !== "string") {
+        return res.status(400).json({ error: "Missing prompt text", received: raw });
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from("shared_prompts")
+        .insert({ user_id: userId, prompt_text: promptText })
+        .select("id")
+        .single();
+
+      if (error) {
+        console.error("Supabase insert error (shared_prompts):", error);
+        return res.status(500).json({ error: error.message });
+      }
+
+      return res.status(200).json({ ok: true, id: data.id });
+    }
+
+    // List
     if (action === "list") {
       const { data, error } = await supabaseAdmin
         .from("saved_prompts")
@@ -206,33 +228,17 @@ Constraints: ${constraints}
         .limit(50);
 
       if (error) return res.status(400).json({ error: error.message });
-
       return res.status(200).json({ ok: true, prompts: data ?? [] });
     }
 
-    // Feedback branch
+    // Feedback
     if (action === "feedback") {
-      const { feedbackText = "", rating = 0 } = req.body;
+      const raw = req.body || {};
+      const flat = raw.body && typeof raw.body === "object" ? raw.body : raw;
 
-      if (!feedbackText) {
-        return res.status(400).json({ error: "feedbackText is required" });
-      }
+      const feedbackText = flat.feedbackText ?? flat.feedback ?? flat.text ?? "";
+      const ratingRaw = flat.rating ?? flat.stars ?? 0;
+      const rating = Number.isFinite(Number(ratingRaw)) ? Number(ratingRaw) : 0;
 
-      const { error } = await supabaseAdmin
-        .from("feedback")
-        .insert([{ user_id: userId, feedback_text: feedbackText, rating: Number(rating) }]);
-
-      if (error) {
-        console.error("Supabase insert error (feedback):", error);
-        return res.status(500).json({ error: error.message });
-      }
-
-      return res.status(200).json({ ok: true });
-    }
-
-    return res.status(400).json({ error: "Unknown action" });
-  } catch (e: any) {
-    console.error("API error:", e);
-    return res.status(500).json({ error: "Server error" });
-  }
-}
+      if (!feedbackText || typeof feedbackText !== "string") {
+        return res.status(400).json({ error: "
