@@ -2,10 +2,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "next-auth";
-// IMPORTANT: Update this import path to where your NextAuth options are exported
-import authOptions from "./auth-options"; // e.g., "../../pages/api/auth/[...nextauth]"
+import authOptions from "./auth-options"; // adjust path if needed
 
-// Create a server-side Supabase client using the SERVICE ROLE key (never expose to client)
+// Supabase admin client (service role key)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -23,7 +22,7 @@ async function getUserId(email: string | null | undefined): Promise<string | nul
   return data.id;
 }
 
-// Helper: reset daily usage if a new day (no-op if row missing)
+// Helper: reset daily usage if a new day
 async function resetUsageIfNewDay(userId: string) {
   const { data: limit } = await supabaseAdmin
     .from("usage_limits")
@@ -55,56 +54,45 @@ async function checkAndIncrementQuota(userId: string) {
     .eq("user_id", userId)
     .single();
 
-  // If row not found (PostgREST code), create a default row
   if (fetchErr && (fetchErr as any).code === "PGRST116") {
     await supabaseAdmin
       .from("usage_limits")
       .insert({ user_id: userId, daily_quota: 10, used_today: 0 });
   }
 
-  // For now, allow unlimited during testing
   return { allowed: true, used: 0, quota: 9999 };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Accept action from query OR body (supports varied client implementations)
+  // Accept action from query OR body
   const actionParam =
     (typeof req.query.action === "string" ? req.query.action : "") ||
     (typeof (req.body as any)?.action === "string" ? (req.body as any).action : "") ||
     (typeof (req.body as any)?.body?.action === "string" ? (req.body as any).body.action : "");
 
   console.log("prompts.ts: method =", req.method, "actionParam =", actionParam);
-  console.log("prompts.ts: env SUPABASE_URL =", process.env.NEXT_PUBLIC_SUPABASE_URL);
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  // Authenticate user via NextAuth
+  // Authenticate user
   const session: any = await getServerSession(req, res, authOptions as any);
   const email = session?.user?.email ?? null;
   console.log("prompts.ts: session email =", email);
-  if (!email) {
-    return res.status(401).json({ error: "Not authenticated" });
-  }
+  if (!email) return res.status(401).json({ error: "Not authenticated" });
 
-  // Resolve userId via profiles table
   const userId = await getUserId(email);
   console.log("prompts.ts: resolved userId =", userId);
-  if (!userId) {
-    return res.status(404).json({ error: "User not found in Supabase profiles" });
-  }
+  if (!userId) return res.status(404).json({ error: "User not found in Supabase profiles" });
 
   try {
-    // Generate a super prompt
+    // Generate
     if (actionParam === "generate") {
       await resetUsageIfNewDay(userId);
-
       const { allowed, used, quota } = await checkAndIncrementQuota(userId);
       if (!allowed) {
-        return res
-          .status(429)
-          .json({ error: `Daily generation limit reached (${quota}/day). Try again tomorrow.` });
+        return res.status(429).json({ error: `Daily limit reached (${quota}/day)` });
       }
 
       const body = req.body || {};
@@ -175,13 +163,10 @@ Constraints: ${constraints}
       });
     }
 
-    // Save a prompt
+    // Save
     if (actionParam === "save") {
       const raw = req.body || {};
-      const flat =
-        raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
-          ? raw.body
-          : raw;
+      const flat = raw?.body && typeof raw.body === "object" ? raw.body : raw;
 
       const promptText =
         flat.promptText ??
@@ -190,8 +175,6 @@ Constraints: ${constraints}
         flat.text ??
         flat.content ??
         (typeof flat === "string" ? flat : "");
-
-      console.log("save: resolved promptText =", promptText);
 
       if (!promptText || typeof promptText !== "string") {
         return res.status(400).json({ error: "Missing prompt text", received: raw });
@@ -199,30 +182,18 @@ Constraints: ${constraints}
 
       const { data, error } = await supabaseAdmin
         .from("saved_prompts")
-        .insert({
-          user_id: userId,
-          prompt_text: promptText,
-        })
+        .insert({ user_id: userId, prompt_text: promptText })
         .select("id")
         .single();
 
-      if (error) {
-        console.error("Supabase insert error (saved_prompts):", error);
-        return res.status(500).json({ error: error.message });
-      }
-
+      if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ ok: true, id: data.id });
     }
 
-    // Share a prompt
+    // Share
     if (actionParam === "share") {
       const raw = req.body || {};
-      console.log("share: request body =", JSON.stringify(raw));
-
-      const flat =
-        raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
-          ? raw.body
-          : raw;
+      const flat = raw?.body && typeof raw.body === "object" ? raw.body : raw;
 
       const promptText =
         flat.promptText ??
@@ -232,30 +203,21 @@ Constraints: ${constraints}
         flat.content ??
         (typeof flat === "string" ? flat : "");
 
-      console.log("share: resolved promptText =", promptText);
-
       if (!promptText || typeof promptText !== "string") {
         return res.status(400).json({ error: "Missing prompt text", received: raw });
       }
 
       const { data, error } = await supabaseAdmin
         .from("shared_prompts")
-        .insert({
-          user_id: userId,
-          prompt_text: promptText,
-        })
+        .insert({ user_id: userId, prompt_text: promptText })
         .select("id")
         .single();
 
-      if (error) {
-        console.error("Supabase insert error (shared_prompts):", error);
-        return res.status(500).json({ error: error.message });
-      }
-
+      if (error) return res.status(500).json({ error: error.message });
       return res.status(200).json({ ok: true, id: data.id });
     }
 
-    // List saved prompts
+    // List
     if (actionParam === "list") {
       const { data, error } = await supabaseAdmin
         .from("saved_prompts")
@@ -264,38 +226,34 @@ Constraints: ${constraints}
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) {
-        return res.status(400).json({ error: error.message });
-      }
-
+      if (error) return res.status(400).json({ error: error.message });
       return res.status(200).json({ ok: true, prompts: data ?? [] });
     }
-
-    // Feedback branch — aligned with your DB
+    // Feedback
     if (actionParam === "feedback") {
       const raw = req.body || {};
-      console.log("feedback: request body =", JSON.stringify(raw));
+      const flat = raw?.body && typeof raw.body === "object" ? raw.body : raw;
 
-      const flat =
-        raw && typeof raw === "object" && raw.body && typeof raw.body === "object"
-          ? raw.body
-          : raw;
-
-      // Accept multiple possible keys, including "comments"
+      // Accept multiple possible keys for text
       const feedbackText =
         flat.feedbackText ??
         flat.feedback ??
-        flat.comments ?? // from your frontend payload
+        flat.comments ??
         flat.text ??
         "";
 
+      // Accept multiple keys for rating
       const ratingRaw = flat.rating ?? flat.stars ?? 0;
       const rating = Number.isFinite(Number(ratingRaw)) ? Number(ratingRaw) : 0;
 
-      // Optional: link feedback to a prompt (requires feedback.prompt_id column)
-      const promptId = flat.promptId ?? null;
+      // Optional linkage (requires feedback.prompt_id in DB)
+      const promptId =
+        flat.promptId ?? flat.sharedPromptId ?? flat.prompt_id ?? null;
 
-      console.log("feedback: resolved text & rating =", feedbackText, rating, "promptId =", promptId);
+      console.log(
+        "feedback: resolved",
+        { feedbackText, rating, promptId }
+      );
 
       if (!feedbackText || typeof feedbackText !== "string") {
         return res
@@ -303,14 +261,20 @@ Constraints: ${constraints}
           .json({ error: "feedbackText/comments is required", received: raw });
       }
 
-      // Build insert object using your actual column names
+      if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+        return res
+          .status(400)
+          .json({ error: "rating must be an integer between 1 and 5" });
+      }
+
       const insertObj: Record<string, any> = {
         user_id: userId,
         feedback_text: feedbackText, // matches your DB column
-        rating, // integer 1–5
+        rating,                      // integer 1–5
       };
 
-      if (promptId) insertObj.prompt_id = promptId; // only if feedback.prompt_id exists
+      // Include prompt_id if present and column exists
+      if (promptId) insertObj.prompt_id = promptId;
 
       const { error } = await supabaseAdmin.from("feedback").insert([insertObj]);
 
@@ -329,3 +293,5 @@ Constraints: ${constraints}
     return res.status(500).json({ error: "Server error" });
   }
 }
+
+    
