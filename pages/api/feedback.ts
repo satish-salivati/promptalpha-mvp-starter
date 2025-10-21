@@ -20,9 +20,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { error } = await supabaseServer()
       .from("feedback")
-      .insert([{ user_id: userId, feedback_text: feedbackText, rating: numericRating }]);
+      .insert([
+        {
+          user_id: userId,
+          feedback_text: feedbackText,
+          rating: numericRating,
+        },
+      ]);
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase insert error:", error);
+      return res.status(500).json({ error: error.message });
+    }
 
     res.status(200).json({ success: true });
   } catch (err: any) {
