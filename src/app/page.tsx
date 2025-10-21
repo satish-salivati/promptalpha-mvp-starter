@@ -484,8 +484,9 @@ export default function Page() {
       )}
     </div>
   </div>
-)}   {/* closes generatedPrompt && ( ... ) */}
-</main>   {/* closes <main> */}
-);          {/* closes return ( ... ) */}
-}           {/* closes Page() function */}
+)}
+</main>
+);
+}
+
 
