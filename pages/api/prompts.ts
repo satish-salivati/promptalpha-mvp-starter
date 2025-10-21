@@ -176,7 +176,7 @@ Constraints: ${constraints}
         (typeof raw === "string" ? raw : "");
 
       if (!promptText || typeof promptText !== "string") {
-        return res.status(400).json({ error: "promptText is required", received: raw });
+        return res.status(400).json({ error: "Missing prompt text", received: raw });
       }
 
       const { data, error } = await supabaseAdmin
@@ -188,7 +188,10 @@ Constraints: ${constraints}
         .select("id")
         .single();
 
-      if (error) return res.status(400).json({ error: error.message });
+      if (error) {
+        console.error("Supabase insert error (saved_prompts):", error);
+        return res.status(500).json({ error: error.message });
+      }
 
       return res.status(200).json({ ok: true, id: data.id });
     }
