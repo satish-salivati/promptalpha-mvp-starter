@@ -2,12 +2,13 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "next-auth";
-// IMPORTANT: Update this path to your actual auth options export
+// IMPORTANT: Update this import path to where your NextAuth options are exported
 import authOptions from "./auth-options"; // e.g., "../../pages/api/auth/[...nextauth]"
 
+// Create a server-side Supabase client using the SERVICE ROLE key (never expose to client)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // server-only
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
 // Helper: get current user_id from Supabase profiles by session email
@@ -22,7 +23,7 @@ async function getUserId(email: string | null | undefined): Promise<string | nul
   return data.id;
 }
 
-// Helper: reset daily usage if a new day
+// Helper: reset daily usage if a new day (no-op if row missing)
 async function resetUsageIfNewDay(userId: string) {
   const { data: limit } = await supabaseAdmin
     .from("usage_limits")
@@ -46,8 +47,7 @@ async function resetUsageIfNewDay(userId: string) {
   }
 }
 
-// Helper: ensure a usage row exists, and check quota
-// For testing: always allow
+// Helper: ensure a usage row exists, and check quota (testing: always allow)
 async function checkAndIncrementQuota(userId: string) {
   const { error: fetchErr } = await supabaseAdmin
     .from("usage_limits")
@@ -55,13 +55,14 @@ async function checkAndIncrementQuota(userId: string) {
     .eq("user_id", userId)
     .single();
 
-  // Row not found code (PostgREST)
+  // If row not found (PostgREST code), create a default row
   if (fetchErr && (fetchErr as any).code === "PGRST116") {
     await supabaseAdmin
       .from("usage_limits")
       .insert({ user_id: userId, daily_quota: 10, used_today: 0 });
   }
 
+  // For now, allow unlimited during testing
   return { allowed: true, used: 0, quota: 9999 };
 }
 
@@ -75,12 +76,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Authenticate user via NextAuth
   const session: any = await getServerSession(req, res, authOptions as any);
   const email = session?.user?.email ?? null;
+  console.log("prompts.ts: session email =", email); // LOG
   if (!email) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
   // Resolve userId via profiles table
   const userId = await getUserId(email);
+  console.log("prompts.ts: resolved userId =", userId); // LOG
   if (!userId) {
     return res.status(404).json({ error: "User not found in Supabase profiles" });
   }
@@ -199,9 +202,11 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, id: data.id });
     }
 
-    // Share a prompt (into shared_prompts table) — tolerant of multiple frontend shapes
+    // Share a prompt (into shared_prompts table) — robust payload logging
     if (action === "share") {
       const raw = req.body || {};
+      console.log("Share request body:", JSON.stringify(raw)); // LOG
+
       const flat = raw && typeof raw === "object" && raw.body && typeof raw.body === "object" ? raw.body : raw;
 
       const promptText =
@@ -211,6 +216,8 @@ Constraints: ${constraints}
         flat.text ??
         flat.content ??
         (typeof flat === "string" ? flat : "");
+
+      console.log("Share resolved promptText:", promptText); // LOG
 
       if (!promptText || typeof promptText !== "string") {
         return res.status(400).json({ error: "Missing prompt text", received: raw });
@@ -226,7 +233,7 @@ Constraints: ${constraints}
         .single();
 
       if (error) {
-        console.error("Supabase insert error (shared_prompts):", error);
+        console.error("Supabase insert error (shared_prompts):", error); // LOG
         return res.status(500).json({ error: error.message });
       }
 
@@ -249,14 +256,18 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, prompts: data ?? [] });
     }
 
-    // Feedback branch — tolerant of nested payloads and key aliases
+    // Feedback branch — robust payload logging
     if (action === "feedback") {
       const raw = req.body || {};
+      console.log("Feedback request body:", JSON.stringify(raw)); // LOG
+
       const flat = raw && typeof raw === "object" && raw.body && typeof raw.body === "object" ? raw.body : raw;
 
       const feedbackText = flat.feedbackText ?? flat.feedback ?? flat.text ?? "";
       const ratingRaw = flat.rating ?? flat.stars ?? 0;
       const rating = Number.isFinite(Number(ratingRaw)) ? Number(ratingRaw) : 0;
+
+      console.log("Feedback resolved text & rating:", feedbackText, rating); // LOG
 
       if (!feedbackText || typeof feedbackText !== "string") {
         return res.status(400).json({ error: "feedbackText is required", received: raw });
@@ -267,7 +278,7 @@ Constraints: ${constraints}
         .insert([{ user_id: userId, feedback_text: feedbackText, rating }]);
 
       if (error) {
-        console.error("Supabase insert error (feedback):", error);
+        console.error("Supabase insert error (feedback):", error); // LOG
         return res.status(500).json({ error: error.message });
       }
 
