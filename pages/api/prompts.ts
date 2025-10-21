@@ -2,13 +2,15 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { createClient } from "@supabase/supabase-js";
 import { getServerSession } from "next-auth";
-import authOptions from "./auth-options";
+// IMPORTANT: Update this path to your actual auth options export
+import authOptions from "./auth-options"; // e.g., "../../pages/api/auth/[...nextauth]"
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // server-only
 );
 
+// Helper: get current user_id from Supabase profiles by session email
 async function getUserId(email: string | null | undefined): Promise<string | null> {
   if (!email) return null;
   const { data, error } = await supabaseAdmin
@@ -20,6 +22,7 @@ async function getUserId(email: string | null | undefined): Promise<string | nul
   return data.id;
 }
 
+// Helper: reset daily usage if a new day
 async function resetUsageIfNewDay(userId: string) {
   const { data: limit } = await supabaseAdmin
     .from("usage_limits")
@@ -43,6 +46,8 @@ async function resetUsageIfNewDay(userId: string) {
   }
 }
 
+// Helper: ensure a usage row exists, and check quota
+// For testing: always allow
 async function checkAndIncrementQuota(userId: string) {
   const { error: fetchErr } = await supabaseAdmin
     .from("usage_limits")
@@ -50,6 +55,7 @@ async function checkAndIncrementQuota(userId: string) {
     .eq("user_id", userId)
     .single();
 
+  // Row not found code (PostgREST)
   if (fetchErr && (fetchErr as any).code === "PGRST116") {
     await supabaseAdmin
       .from("usage_limits")
@@ -66,21 +72,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  // Authenticate user via NextAuth
   const session: any = await getServerSession(req, res, authOptions as any);
   const email = session?.user?.email ?? null;
   if (!email) {
     return res.status(401).json({ error: "Not authenticated" });
   }
 
+  // Resolve userId via profiles table
   const userId = await getUserId(email);
   if (!userId) {
     return res.status(404).json({ error: "User not found in Supabase profiles" });
   }
 
   try {
-    // Generate
+    // Generate a super prompt
     if (action === "generate") {
       await resetUsageIfNewDay(userId);
+
       const { allowed, used, quota } = await checkAndIncrementQuota(userId);
       if (!allowed) {
         return res
@@ -88,7 +97,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           .json({ error: `Daily generation limit reached (${quota}/day). Try again tomorrow.` });
       }
 
-      const body = req.body;
+      const body = req.body || {};
       const {
         customNeed = "",
         persona = "",
@@ -156,10 +165,10 @@ Constraints: ${constraints}
       });
     }
 
-    // Save
+    // Save a prompt (into saved_prompts table) — tolerant of multiple frontend shapes
     if (action === "save") {
       const raw = req.body || {};
-      const flat = raw.body && typeof raw.body === "object" ? raw.body : raw;
+      const flat = raw && typeof raw === "object" && raw.body && typeof raw.body === "object" ? raw.body : raw;
 
       const promptText =
         flat.promptText ??
@@ -175,7 +184,10 @@ Constraints: ${constraints}
 
       const { data, error } = await supabaseAdmin
         .from("saved_prompts")
-        .insert({ user_id: userId, prompt_text: promptText })
+        .insert({
+          user_id: userId,
+          prompt_text: promptText,
+        })
         .select("id")
         .single();
 
@@ -187,10 +199,10 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, id: data.id });
     }
 
-    // Share
+    // Share a prompt (into shared_prompts table) — tolerant of multiple frontend shapes
     if (action === "share") {
       const raw = req.body || {};
-      const flat = raw.body && typeof raw.body === "object" ? raw.body : raw;
+      const flat = raw && typeof raw === "object" && raw.body && typeof raw.body === "object" ? raw.body : raw;
 
       const promptText =
         flat.promptText ??
@@ -206,7 +218,10 @@ Constraints: ${constraints}
 
       const { data, error } = await supabaseAdmin
         .from("shared_prompts")
-        .insert({ user_id: userId, prompt_text: promptText })
+        .insert({
+          user_id: userId,
+          prompt_text: promptText,
+        })
         .select("id")
         .single();
 
@@ -218,7 +233,7 @@ Constraints: ${constraints}
       return res.status(200).json({ ok: true, id: data.id });
     }
 
-    // List
+    // List saved prompts
     if (action === "list") {
       const { data, error } = await supabaseAdmin
         .from("saved_prompts")
@@ -227,18 +242,42 @@ Constraints: ${constraints}
         .order("created_at", { ascending: false })
         .limit(50);
 
-      if (error) return res.status(400).json({ error: error.message });
+      if (error) {
+        return res.status(400).json({ error: error.message });
+      }
+
       return res.status(200).json({ ok: true, prompts: data ?? [] });
     }
 
-    // Feedback
+    // Feedback branch — tolerant of nested payloads and key aliases
     if (action === "feedback") {
       const raw = req.body || {};
-      const flat = raw.body && typeof raw.body === "object" ? raw.body : raw;
+      const flat = raw && typeof raw === "object" && raw.body && typeof raw.body === "object" ? raw.body : raw;
 
       const feedbackText = flat.feedbackText ?? flat.feedback ?? flat.text ?? "";
       const ratingRaw = flat.rating ?? flat.stars ?? 0;
       const rating = Number.isFinite(Number(ratingRaw)) ? Number(ratingRaw) : 0;
 
       if (!feedbackText || typeof feedbackText !== "string") {
-        return res.status(400).json({ error: "
+        return res.status(400).json({ error: "feedbackText is required", received: raw });
+      }
+
+      const { error } = await supabaseAdmin
+        .from("feedback")
+        .insert([{ user_id: userId, feedback_text: feedbackText, rating }]);
+
+      if (error) {
+        console.error("Supabase insert error (feedback):", error);
+        return res.status(500).json({ error: error.message });
+      }
+
+      return res.status(200).json({ ok: true });
+    }
+
+    // Unknown action
+    return res.status(400).json({ error: "Unknown action" });
+  } catch (e: any) {
+    console.error("API error:", e);
+    return res.status(500).json({ error: "Server error" });
+  }
+}
