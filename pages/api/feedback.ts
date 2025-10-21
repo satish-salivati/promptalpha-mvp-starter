@@ -9,13 +9,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { userId, feedbackText, rating } = req.body;
 
-    if (!userId || !feedbackText || typeof rating !== "number") {
-      return res.status(400).json({ error: "Missing userId, feedbackText, or rating" });
+    if (!userId || !feedbackText) {
+      return res.status(400).json({ error: "Missing userId or feedbackText" });
+    }
+
+    const numericRating = Number(rating);
+    if (isNaN(numericRating)) {
+      return res.status(400).json({ error: "Rating must be a number" });
     }
 
     const { error } = await supabaseServer()
       .from("feedback")
-      .insert([{ user_id: userId, feedback_text: feedbackText, rating }]);
+      .insert([{ user_id: userId, feedback_text: feedbackText, rating: numericRating }]);
 
     if (error) throw error;
 
