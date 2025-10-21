@@ -27,6 +27,9 @@ export default function Page() {
   // NEW state for linking feedback to a saved prompt
   const [promptId, setPromptId] = useState<string | null>(null);
 
+  const [isTesting, setIsTesting] = useState(false);
+  const [testOutput, setTestOutput] = useState("");
+
   // Options
   const myRoleOptions = [ "Founder","CEO / Executive","HR Manager","Recruiter / Talent Partner","Product Manager","Project Manager","Sales Lead / AE","Customer Success","Marketing Manager","Content Creator","Educator / Trainer","Student","Researcher / Analyst","Operations Manager","Engineer (Non-ML)" ];
 
@@ -402,12 +405,33 @@ export default function Page() {
       </button>
     </div>
 
-    {/* 👇 New section: Why this is a super prompt */}
+  {/* Generated prompt output */}
+{generatedPrompt && (
+  <div className="mt-8 rounded-md border border-gray-200 p-4 bg-gray-50">
+    <h2 className="text-lg font-semibold mb-2">Generated Prompt</h2>
+    <pre className="whitespace-pre-wrap text-sm">{generatedPrompt}</pre>
+
+    <div className="mt-4 flex flex-wrap gap-3">
+      <button
+        type="button"
+        onClick={handleCopyPrompt}
+        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
+      >
+        Copy
+      </button>
+      <button
+        type="button"
+        onClick={handleDownloadPrompt}
+        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-100"
+      >
+        Download
+      </button>
+    </div>
+
+    {/* Why this is a super prompt */}
     <div className="mt-6 p-4 border rounded bg-white">
       <h3 className="text-lg font-semibold mb-2">Why this is a super prompt</h3>
-      <p className="text-sm text-gray-700">
-        This prompt was enhanced by:
-      </p>
+      <p className="text-sm text-gray-700">This prompt was enhanced by:</p>
       <ul className="list-disc list-inside text-sm text-gray-700 mt-2">
         <li>Adding clear role/context instructions (e.g. “Act as a …”).</li>
         <li>Specifying output format and tone for consistency.</li>
@@ -419,7 +443,47 @@ export default function Page() {
         Compared to a regular prompt, this “super prompt” is explicit, structured, and reusable.
       </p>
     </div>
-    {/* 👆 End new section */}
+
+    {/* Test Prompt button + output */}
+    <div className="mt-6">
+      <button
+        type="button"
+        onClick={async () => {
+          setIsTesting(true);
+          setTestOutput("");
+          try {
+            const res = await fetch("/api/testPrompt", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ prompt: generatedPrompt }),
+            });
+            const data = await res.json();
+            setTestOutput(data.output);
+          } catch (err) {
+            setTestOutput("Error testing prompt.");
+          } finally {
+            setIsTesting(false);
+          }
+        }}
+        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+      >
+        Test Prompt
+      </button>
+
+      {isTesting && (
+        <p className="mt-2 text-sm text-gray-500">Running prompt...</p>
+      )}
+
+      {testOutput && (
+        <div className="mt-4 p-4 border rounded bg-white">
+          <h3 className="text-lg font-semibold mb-2">Test Output</h3>
+          <pre className="whitespace-pre-wrap text-sm text-gray-800">
+            {testOutput}
+          </pre>
+        </div>
+      )}
+    </div>
   </div>
 )}
+
 
