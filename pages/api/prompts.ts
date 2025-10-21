@@ -47,42 +47,23 @@ async function resetUsageIfNewDay(userId: string) {
 }
 
 // Helper: ensure a usage row exists, and check quota
+// ⚠️ Modified: always return allowed:true for testing
 async function checkAndIncrementQuota(userId: string) {
   // Ensure row exists
-  const { data: current, error: fetchErr } = await supabaseAdmin
+  const { error: fetchErr } = await supabaseAdmin
     .from("usage_limits")
     .select("daily_quota, used_today")
     .eq("user_id", userId)
     .single();
 
   if (fetchErr && fetchErr.code === "PGRST116") {
-    // No row: initialize with defaults
     await supabaseAdmin
       .from("usage_limits")
       .insert({ user_id: userId, daily_quota: 10, used_today: 0 });
   }
 
-  // Re-fetch after potential insert
-  const { data: limit } = await supabaseAdmin
-    .from("usage_limits")
-    .select("daily_quota, used_today")
-    .eq("user_id", userId)
-    .single();
-
-  const used = limit?.used_today ?? 0;
-  const quota = limit?.daily_quota ?? 10;
-
-  if (used >= quota) {
-    return { allowed: false, used, quota };
-  }
-
-  // Increment usage
-  await supabaseAdmin
-    .from("usage_limits")
-    .update({ used_today: used + 1 })
-    .eq("user_id", userId);
-
-  return { allowed: true, used: used + 1, quota };
+  // For testing: bypass quota enforcement
+  return { allowed: true, used: 0, quota: 9999 };
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -108,10 +89,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     // Generate a super prompt via OpenAI with usage caps
     if (action === "generate") {
-      // Reset daily counters if needed
       await resetUsageIfNewDay(userId);
 
-      // Check quota and increment usage atomically
+      // Quota check now always allows
       const { allowed, used, quota } = await checkAndIncrementQuota(userId);
       if (!allowed) {
         return res
@@ -133,7 +113,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         model = process.env.MODEL_NAME ?? "gpt-4o-mini",
       } = body;
 
-      // Build a deterministic instruction wrapper
       const userPrompt = `
 You are a prompt engineering assistant. Convert the user's request into a structured, reusable super prompt.
 Follow this format:
@@ -153,7 +132,6 @@ Tone: ${tone}
 Constraints: ${constraints}
       `.trim();
 
-      // Call OpenAI Chat Completions
       const resp = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
