@@ -29,3 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     recentFeedback: recentFeedback || [],
   });
 }
+export async function getServerSideProps() {
+  // Forces this page to render at request time (no static pre-render),
+  // so next-auth's useSession() works correctly.
+  return { props: {} };
+}
