@@ -177,9 +177,21 @@ async function handleSignOut() {
     const payload = buildPayload();
 
     try {
+      // ✅ Get the current session from Supabase
+      const { data: { session }, error } = await supabase.auth.getSession();
+
+      if (error || !session?.access_token) {
+        alert("Please sign in to generate prompts.");
+        return;
+      }
+
+      // ✅ Send token in Authorization header
       const res = await fetch("/api/prompts?action=generate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify(payload),
       });
 
@@ -200,27 +212,27 @@ async function handleSignOut() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between mb-6">
-  <h1 className="text-2xl font-semibold">PromptAlpha</h1>
+        <h1 className="text-2xl font-semibold">PromptAlpha</h1>
 
-  <div className="text-sm flex items-center gap-3">
-    {session ? (
-      <>
-        <span className="text-gray-600">Signed in</span>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-        >
-          Sign out
-        </button>
-      </>
-    ) : (
-      <Link href="/sign-in" className="text-blue-600 hover:underline">
-        Sign in
-      </Link>
-    )}
-  </div>
-</div>
+        <div className="text-sm flex items-center gap-3">
+          {session ? (
+            <>
+              <span className="text-gray-600">Signed in</span>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+              >
+                Sign out
+              </button>
+            </>
+          ) : (
+            <Link href="/sign-in" className="text-blue-600 hover:underline">
+              Sign in
+            </Link>
+          )}
+        </div>
+      </div>
 
 
       <form onSubmit={handleGeneratePrompt}>
