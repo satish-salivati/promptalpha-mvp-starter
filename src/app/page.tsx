@@ -15,6 +15,8 @@ export default function Page() {
   const [style, setStyle] = useState("Persuasive");
   const [tone, setTone] = useState("Confident");
   const [constraints, setConstraints] = useState("");
+  const supabase = useSupabaseClient();
+  const session = useSession();  
 
   // Advanced toggles
   const [seoFriendly, setSeoFriendly] = useState(false);
