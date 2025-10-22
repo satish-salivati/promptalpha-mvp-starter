@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useSession, useSupabaseClient } from "@supabase/auth-helpers-react";
 
 export default function Page() {
   // State hooks
@@ -20,7 +22,14 @@ export default function Page() {
   const [structuredOutput, setStructuredOutput] = useState(false);
   const [avoidPitfalls, setAvoidPitfalls] = useState(false);
   const [complianceMode, setComplianceMode] = useState(false);
+  const session = useSession();
+  const supabase = useSupabaseClient();
 
+async function handleSignOut() {
+  await supabase.auth.signOut();
+  window.location.href = "/"; // refresh after sign out
+}
+    
   // Generated prompt state
   const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
 
@@ -187,7 +196,29 @@ export default function Page() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="text-2xl font-semibold mb-6">PromptAlpha</h1>
+      <div className="flex items-center justify-between mb-6">
+  <h1 className="text-2xl font-semibold">PromptAlpha</h1>
+
+  <div className="text-sm flex items-center gap-3">
+    {session ? (
+      <>
+        <span className="text-gray-600">Signed in</span>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+        >
+          Sign out
+        </button>
+      </>
+    ) : (
+      <Link href="/sign-in" className="text-blue-600 hover:underline">
+        Sign in
+      </Link>
+    )}
+  </div>
+</div>
+
 
       <form onSubmit={handleGeneratePrompt}>
         {/* Custom Need */}
