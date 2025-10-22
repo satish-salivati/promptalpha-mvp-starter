@@ -27,7 +27,6 @@ export default function Page() {
   const [structuredOutput, setStructuredOutput] = useState(false);
   const [avoidPitfalls, setAvoidPitfalls] = useState(false);
   const [complianceMode, setComplianceMode] = useState(false);
-  const supabase = useSupabaseClient();
 
 async function handleSignOut() {
   await supabase.auth.signOut();
