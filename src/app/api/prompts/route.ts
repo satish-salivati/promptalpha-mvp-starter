@@ -27,12 +27,6 @@ export async function POST(req: Request) {
 
     const userId = user.id;
 
-    // 🔎 Diagnostic logging
-    console.log("Authenticated user:", {
-      id: user.id,
-      email: user.email,
-    });
-
     // 2) Parse body and action
     const url = new URL(req.url);
     const queryAction = url.searchParams.get("action") || "";
@@ -42,7 +36,7 @@ export async function POST(req: Request) {
     const body =
       rawBody?.body && typeof rawBody.body === "object" ? rawBody.body : rawBody;
 
-    // 3) Actions
+    // 3) Dispatch actions
 
     // Generate
     if (action === "generate") {
@@ -99,8 +93,6 @@ export async function POST(req: Request) {
         );
       }
 
-      console.log("Inserting into prompts with user_id:", userId);
-
       const { error } = await supabaseAdmin
         .from("prompts")
         .insert({ user_id: userId, prompt_text: promptText });
@@ -128,8 +120,6 @@ export async function POST(req: Request) {
           { status: 400 }
         );
       }
-
-      console.log("Inserting into shared_prompts with user_id:", userId);
 
       const { data, error } = await supabaseAdmin
         .from("shared_prompts")
@@ -176,8 +166,6 @@ export async function POST(req: Request) {
         rating,
       };
       if (promptId) insertObj.prompt_id = promptId;
-
-      console.log("Inserting into feedback with user_id:", userId);
 
       const { error } = await supabaseAdmin.from("feedback").insert([insertObj]);
       if (error) {
