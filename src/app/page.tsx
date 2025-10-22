@@ -246,13 +246,15 @@ async function handleSignOut() {
   // --- Share Prompt ---
   async function handleSharePrompt(e: React.MouseEvent) {
     e.preventDefault();
+
     try {
       const { data: { session }, error } = await supabase.auth.getSession();
       if (error || !session?.access_token) {
         alert("Please sign in to share prompts.");
         return;
       }
-      if (!generatedPrompt) {
+
+      if (!generatedPrompt || typeof generatedPrompt !== "string") {
         alert("No generated prompt to share.");
         return;
       }
@@ -263,22 +265,29 @@ async function handleSignOut() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ promptText: generatedPrompt }),
+        body: JSON.stringify({
+          promptText: generatedPrompt, // standardized key
+        }),
       });
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
+        console.error("Share error:", errData);
         alert(errData?.error || "Failed to share prompt.");
         return;
       }
 
       const data = await res.json();
-      alert(`Prompt shared. Share ID: ${data.id}`);
+      // Optionally store shareId in state if you want to render a link
+      // setShareId(data.id);
+
+      alert(`Prompt shared successfully. Share ID: ${data.id}`);
     } catch (err) {
       console.error("Share failed:", err);
-      alert("Network error while sharing.");
+      alert("Network error while sharing. See console for details.");
     }
   }
+
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
