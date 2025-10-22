@@ -7,40 +7,36 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// Helper: get user_id from profiles table by email
-async function getUserId(email: string | null | undefined): Promise<string | null> {
-  if (!email) return null;
-  const { data, error } = await supabaseAdmin
-    .from("profiles")
-    .select("id")
-    .eq("email", email)
-    .single();
-  if (error || !data?.id) return null;
-  return data.id;
-}
-
-// TEMP: For testing, we’ll pull email from a header.
-// Later you can replace this with NextAuth session logic.
-function getEmailFromHeaders(req: Request): string | null {
-  return req.headers.get("x-demo-email");
-}
-
 export async function POST(req: Request) {
-  const url = new URL(req.url);
-  const actionParam =
-    url.searchParams.get("action") ||
-    (await req.clone().json().catch(() => ({} as any))).action ||
-    (await req.clone().json().catch(() => ({} as any))).body?.action ||
-    "";
-
-  const email = getEmailFromHeaders(req);
-  if (!email) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-
-  const userId = await getUserId(email);
-  if (!userId) return NextResponse.json({ error: "User not found in Supabase profiles" }, { status: 404 });
-
   try {
+    // 1. Extract token from Authorization header
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace("Bearer ", "");
+
+    if (!token) {
+      return NextResponse.json({ error: "No token provided" }, { status: 401 });
+    }
+
+    // 2. Verify token with Supabase
+    const {
+      data: { user },
+      error: userError,
+    } = await supabaseAdmin.auth.getUser(token);
+
+    if (userError || !user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const userId = user.id;
+
+    // 3. Parse request body
     const body = await req.json().catch(() => ({} as any));
+    const actionParam =
+      new URL(req.url).searchParams.get("action") ||
+      body.action ||
+      body?.body?.action ||
+      "";
+
     const flat = body?.body && typeof body.body === "object" ? body.body : body;
 
     // --- SHARE ---
@@ -54,7 +50,10 @@ export async function POST(req: Request) {
         (typeof flat === "string" ? flat : "");
 
       if (!promptText || typeof promptText !== "string") {
-        return NextResponse.json({ error: "Missing prompt text", received: body }, { status: 400 });
+        return NextResponse.json(
+          { error: "Missing prompt text", received: body },
+          { status: 400 }
+        );
       }
 
       const { data, error } = await supabaseAdmin
@@ -83,10 +82,16 @@ export async function POST(req: Request) {
         flat.promptId ?? flat.sharedPromptId ?? flat.prompt_id ?? null;
 
       if (!feedbackText || typeof feedbackText !== "string") {
-        return NextResponse.json({ error: "feedbackText/comments is required", received: body }, { status: 400 });
+        return NextResponse.json(
+          { error: "feedbackText/comments is required", received: body },
+          { status: 400 }
+        );
       }
       if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
-        return NextResponse.json({ error: "rating must be an integer between 1 and 5" }, { status: 400 });
+        return NextResponse.json(
+          { error: "rating must be an integer between 1 and 5" },
+          { status: 400 }
+        );
       }
 
       const insertObj: Record<string, any> = {
@@ -103,8 +108,12 @@ export async function POST(req: Request) {
     }
 
     // --- UNKNOWN ACTION ---
-    return NextResponse.json({ error: "Unknown action", receivedAction: actionParam }, { status: 400 });
-  } catch {
+    return NextResponse.json(
+      { error: "Unknown action", receivedAction: actionParam },
+      { status: 400 }
+    );
+  } catch (err: any) {
+    console.error("API error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
