@@ -83,7 +83,7 @@ export default function AdminPage() {
         const { data: feedbackData, error: feedbackErr } = await supabase
           .from("feedback")
           .select("*")
-          .order("created_at", { ascending: "desc" });
+          .order("created_at", { ascending: false });
         if (feedbackErr) throw new Error(`Feedback error: ${feedbackErr.message}`);
 
         if (!isCancelled) {
