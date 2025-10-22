@@ -136,29 +136,7 @@ async function handleSignOut() {
     }
   }
 
-  async function handleFeedback() {
-    if (!promptId) {
-      alert("Please Save or Share first before giving feedback.");
-      return;
-    }
-
-    if (!feedbackText || rating < 1 || rating > 5) {
-      alert("Please enter feedback text and select a rating (1–5).");
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/route?action=feedback", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          promptId,
-          rating,
-          feedbackText,
-        }),
-      });
-
-      const data = await res.json();
+       const data = await res.json();
 
       if (!res.ok) {
         console.error("Feedback error:", data.error);
