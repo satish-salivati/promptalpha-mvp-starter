@@ -141,19 +141,42 @@ async function handleSignOut() {
       alert("Please Save or Share first before giving feedback.");
       return;
     }
-    const ratingStr = prompt("Rate 1–5:");
-    const rating = ratingStr ? parseInt(ratingStr, 10) : undefined;
-    const comments = prompt("Any comments?");
-    if (!rating || rating < 1 || rating > 5) {
-      alert("Please enter a rating from 1 to 5.");
+
+    if (!feedbackText || rating < 1 || rating > 5) {
+      alert("Please enter feedback text and select a rating (1–5).");
       return;
     }
-    const res = await fetch("/api/prompts?action=feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ promptId, rating, comments }),
-    });
-    alert(res.ok ? "Feedback received. Thank you!" : "Feedback failed.");
+
+    try {
+      const res = await fetch("/api/route?action=feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          promptId,
+          rating,
+          feedbackText,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Feedback error:", data.error);
+        alert(`Error saving feedback: ${data.error}`);
+        return;
+      }
+
+      console.log("Feedback saved:", data);
+      alert("Thank you for your feedback!");
+
+      // Reset and close form
+      setFeedbackText("");
+      setRating(0);
+      setFeedbackOpen(false);
+    } catch (err) {
+      console.error("Feedback request failed:", err);
+      alert("Something went wrong while saving feedback.");
+    }
   }
 
   function handleCopyPrompt() {
@@ -245,8 +268,8 @@ async function handleSignOut() {
       alert("Network error while saving.");
     }
   }
-// --- Feedback Prompt ---
-async function handleFeedbackPrompt(e: React.MouseEvent) {
+// --- Feedback ---
+async function handleFeedback(e: React.MouseEvent) {
   e.preventDefault();
 
   try {
@@ -261,29 +284,39 @@ async function handleFeedbackPrompt(e: React.MouseEvent) {
       return;
     }
 
-    // For now, hardcode feedback text + rating
-    const feedbackText = "This prompt was useful!";
-    const rating = 5; // integer 1–5
+    if (!feedbackText || rating < 1 || rating > 5) {
+      alert("Please enter feedback text and select a rating (1–5).");
+      return;
+    }
 
-    const res = await fetch("/api/prompts?action=feedback", {
+    const res = await fetch("/api/route?action=feedback", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify({
+        promptId,
         feedbackText,
         rating,
       }),
     });
 
+    const data = await res.json();
+
     if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      alert(errData?.error || "Failed to submit feedback.");
+      console.error("Feedback error:", data.error);
+      alert(data?.error || "Failed to submit feedback.");
       return;
     }
 
-    alert("Feedback submitted successfully.");
+    console.log("Feedback saved:", data);
+    alert("Thank you for your feedback!");
+
+    // Reset and close form
+    setFeedbackText("");
+    setRating(0);
+    setFeedbackOpen(false);
   } catch (err) {
     console.error("Feedback failed:", err);
     alert("Network error while submitting feedback.");
