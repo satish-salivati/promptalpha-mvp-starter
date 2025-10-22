@@ -474,26 +474,38 @@ async function handleSignOut() {
             type="submit"
             className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
-            Generate prompt
+            Generate Prompt
           </button>
+
+          {/* Save */}
           <button
             type="button"
-            onClick={handleSave}
+            onClick={handleSavePrompt}
             className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+            disabled={!generatedPrompt}
+            title={!generatedPrompt ? "Generate a prompt first" : ""}
           >
             Save
           </button>
+
+          {/* Share */}
           <button
             type="button"
-            onClick={handleShare}
+            onClick={handleSharePrompt}
             className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+            disabled={!generatedPrompt}
+            title={!generatedPrompt ? "Generate a prompt first" : ""}
           >
             Share
           </button>
+
+          {/* Feedback */}
           <button
             type="button"
-            onClick={handleFeedback}
+            onClick={handleFeedbackPrompt}
             className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+            disabled={!generatedPrompt}
+            title={!generatedPrompt ? "Generate a prompt first" : ""}
           >
             Give feedback
           </button>
