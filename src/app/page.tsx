@@ -246,7 +246,7 @@ async function handleFeedback(e: React.MouseEvent) {
       return;
     }
 
-    const res = await fetch("/api/route?action=feedback", {
+      const res = await fetch("/api/prompts?action=feedback", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
