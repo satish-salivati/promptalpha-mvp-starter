@@ -172,20 +172,18 @@ async function handleSignOut() {
     URL.revokeObjectURL(url);
   }
 
+  // --- Generate Prompt ---
   async function handleGeneratePrompt(e: React.FormEvent) {
     e.preventDefault();
     const payload = buildPayload();
 
     try {
-      // ✅ Get the current session from Supabase
       const { data: { session }, error } = await supabase.auth.getSession();
-
       if (error || !session?.access_token) {
         alert("Please sign in to generate prompts.");
         return;
       }
 
-      // ✅ Send token in Authorization header
       const res = await fetch("/api/prompts?action=generate", {
         method: "POST",
         headers: {
@@ -206,6 +204,79 @@ async function handleSignOut() {
     } catch (err) {
       alert("Network error. See console for details.");
       console.error(err);
+    }
+  }
+
+  // --- Save Prompt ---
+  async function handleSavePrompt(e: React.MouseEvent) {
+    e.preventDefault();
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session?.access_token) {
+        alert("Please sign in to save prompts.");
+        return;
+      }
+      if (!generatedPrompt) {
+        alert("No generated prompt to save.");
+        return;
+      }
+
+      const res = await fetch("/api/prompts?action=save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ promptText: generatedPrompt }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData?.error || "Failed to save prompt.");
+        return;
+      }
+
+      alert("Prompt saved successfully.");
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("Network error while saving.");
+    }
+  }
+
+  // --- Share Prompt ---
+  async function handleSharePrompt(e: React.MouseEvent) {
+    e.preventDefault();
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error || !session?.access_token) {
+        alert("Please sign in to share prompts.");
+        return;
+      }
+      if (!generatedPrompt) {
+        alert("No generated prompt to share.");
+        return;
+      }
+
+      const res = await fetch("/api/prompts?action=share", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ promptText: generatedPrompt }),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        alert(errData?.error || "Failed to share prompt.");
+        return;
+      }
+
+      const data = await res.json();
+      alert(`Prompt shared. Share ID: ${data.id}`);
+    } catch (err) {
+      console.error("Share failed:", err);
+      alert("Network error while sharing.");
     }
   }
 
@@ -233,7 +304,6 @@ async function handleSignOut() {
           )}
         </div>
       </div>
-
 
       <form onSubmit={handleGeneratePrompt}>
         {/* Custom Need */}
