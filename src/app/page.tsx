@@ -15,7 +15,10 @@ export default function Page() {
   const [style, setStyle] = useState("Persuasive");
   const [tone, setTone] = useState("Confident");
   const [constraints, setConstraints] = useState("");
-
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState("");
+  const [rating, setRating] = useState(0);
+  
   // ✅ Only declare once
   const session = useSession();
   const supabase = useSupabaseClient();
@@ -553,18 +556,63 @@ async function handleFeedbackPrompt(e: React.MouseEvent) {
             Share
           </button>
 
-          {/* Feedback */}
-          <button
-            type="button"
-            onClick={handleFeedbackPrompt}
-            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-            disabled={!generatedPrompt}
-            title={!generatedPrompt ? "Generate a prompt first" : ""}
-          >
-            Give feedback
-          </button>
-        </div>
-      </form>
+{/* Feedback */}
+{!feedbackOpen ? (
+  <button
+    type="button"
+    onClick={() => setFeedbackOpen(true)}
+    className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+    disabled={!generatedPrompt}
+    title={!generatedPrompt ? "Generate a prompt first" : ""}
+  >
+    Give feedback
+  </button>
+) : (
+  <div className="border rounded-md p-3 space-y-2">
+    <textarea
+      placeholder="Your feedback..."
+      value={feedbackText}
+      onChange={(e) => setFeedbackText(e.target.value)}
+      className="w-full border rounded-md p-2"
+    />
+    <div className="flex space-x-2">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <button
+          key={star}
+          type="button"
+          onClick={() => setRating(star)}
+          className={`px-2 py-1 border rounded-md ${
+            rating === star ? "bg-gray-200 font-bold" : ""
+          }`}
+        >
+          {star}
+        </button>
+      ))}
+    </div>
+    <div className="flex space-x-2">
+      <button
+        type="button"
+        onClick={handleFeedback}
+        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+      >
+        Submit Feedback
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setFeedbackOpen(false);
+          setFeedbackText("");
+          setRating(0);
+        }}
+        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+      >
+        Cancel
+      </button>
+    </div>
+  </div>
+)}
+</div>
+</form>
 
         {/* Generated prompt output */}
       {generatedPrompt && (
