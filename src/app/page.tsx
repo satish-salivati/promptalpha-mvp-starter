@@ -242,7 +242,52 @@ async function handleSignOut() {
       alert("Network error while saving.");
     }
   }
+// --- Feedback Prompt ---
+async function handleFeedbackPrompt(e: React.MouseEvent) {
+  e.preventDefault();
 
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.access_token) {
+      alert("Please sign in to give feedback.");
+      return;
+    }
+
+    if (!generatedPrompt) {
+      alert("Generate a prompt before giving feedback.");
+      return;
+    }
+
+    // For now, hardcode feedback text + rating
+    const feedbackText = "This prompt was useful!";
+    const rating = 5; // integer 1–5
+
+    const res = await fetch("/api/prompts?action=feedback", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        feedbackText,
+        rating,
+      }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      alert(errData?.error || "Failed to submit feedback.");
+      return;
+    }
+
+    alert("Feedback submitted successfully.");
+  } catch (err) {
+    console.error("Feedback failed:", err);
+    alert("Network error while submitting feedback.");
+  }
+}
+
+    
   // --- Share Prompt ---
   async function handleSharePrompt(e: React.MouseEvent) {
     e.preventDefault();
