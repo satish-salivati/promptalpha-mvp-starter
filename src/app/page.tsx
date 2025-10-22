@@ -136,27 +136,6 @@ async function handleSignOut() {
     }
   }
 
-       const data = await res.json();
-
-      if (!res.ok) {
-        console.error("Feedback error:", data.error);
-        alert(`Error saving feedback: ${data.error}`);
-        return;
-      }
-
-      console.log("Feedback saved:", data);
-      alert("Thank you for your feedback!");
-
-      // Reset and close form
-      setFeedbackText("");
-      setRating(0);
-      setFeedbackOpen(false);
-    } catch (err) {
-      console.error("Feedback request failed:", err);
-      alert("Something went wrong while saving feedback.");
-    }
-  }
-
   function handleCopyPrompt() {
     if (!generatedPrompt) return;
     navigator.clipboard
