@@ -42,7 +42,7 @@ type FeedbackRow = {
 };
 
 // Replace with your admin email for MVP gating
-const ADMIN_EMAIL = "you@example.com"; // TODO: set your email
+const ADMIN_EMAIL = "salivatisatish@gmail.com"; // TODO: set your email
 
 export default function AdminPage() {
   const session = useSession();
