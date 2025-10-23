@@ -4,6 +4,15 @@ const nextConfig = {
     // ✅ This tells Next.js not to fail the build on ESLint errors
     ignoreDuringBuilds: true,
   },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/landing',
+        permanent: false, // set to true later if you want SEO to treat it as permanent
+      },
+    ];
+  },
 };
 
-export default nextConfig;
+module.exports = nextConfig;
