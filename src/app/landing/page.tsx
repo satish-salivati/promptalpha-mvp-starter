@@ -138,6 +138,53 @@ export default function LandingPage() {
           Try PromptAlpha Now
         </a>
       </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-gray-300 py-12 px-6">
+        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8">
+          {/* Brand */}
+          <div>
+            <h3 className="text-xl font-bold text-white">PromptAlpha</h3>
+            <p className="mt-2 text-sm text-gray-400">
+              Structured prompts for better AI results.
+            </p>
+          </div>
+
+          {/* Product Links */}
+          <div>
+            <h4 className="font-semibold text-white mb-3">Product</h4>
+            <ul className="space-y-2 text-sm">
+              <li><a href="/app" className="hover:text-white">Start Generating</a></li>
+              <li><a href="/landing" className="hover:text-white">Landing Page</a></li>
+              <li><a href="#" className="hover:text-white">Pricing (coming soon)</a></li>
+            </ul>
+          </div>
+
+          {/* Company Links */}
+          <div>
+            <h4 className="font-semibold text-white mb-3">Company</h4>
+            <ul className="space-y-2 text-sm">
+              <li><a href="#" className="hover:text-white">About</a></li>
+              <li><a href="#" className="hover:text-white">Blog</a></li>
+              <li><a href="#" className="hover:text-white">Careers</a></li>
+            </ul>
+          </div>
+
+          {/* Social / Contact */}
+          <div>
+            <h4 className="font-semibold text-white mb-3">Connect</h4>
+            <ul className="space-y-2 text-sm">
+              <li><a href="mailto:hello@promptalpha.com" className="hover:text-white">hello@promptalpha.com</a></li>
+              <li><a href="https://linkedin.com/company/promptalpha" target="_blank" className="hover:text-white">LinkedIn</a></li>
+              <li><a href="https://twitter.com/promptalpha" target="_blank" className="hover:text-white">X (Twitter)</a></li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-12 border-t border-gray-700 pt-6 text-center text-sm text-gray-500">
+          © {new Date().getFullYear()} PromptAlpha. All rights reserved.
+        </div>
+      </footer>
     </main>
   )
 }
