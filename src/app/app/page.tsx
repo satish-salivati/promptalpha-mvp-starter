@@ -310,88 +310,94 @@ export default function Page() {
             type="submit"
             className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
           >
-            Generate Prompt
-          </button>
+{/* Actions */}
+<div className="flex flex-wrap items-center gap-3">
+  <button
+    type="submit"
+    className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+  >
+    Generate Prompt
+  </button>
 
-          {/* Save */}
+  {/* Save */}
+  <button
+    type="button"
+    onClick={handleSave}   // ✅ unified
+    className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+    disabled={!generatedPrompt}
+    title={!generatedPrompt ? "Generate a prompt first" : ""}
+  >
+    Save
+  </button>
+
+  {/* Share */}
+  <button
+    type="button"
+    onClick={handleShare}   // ✅ unified
+    className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+    disabled={!generatedPrompt}
+    title={!generatedPrompt ? "Generate a prompt first" : ""}
+  >
+    Share
+  </button>
+
+  {/* Feedback */}
+  {!feedbackOpen ? (
+    <button
+      type="button"
+      onClick={() => setFeedbackOpen(true)}
+      className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+      disabled={!generatedPrompt}
+      title={!generatedPrompt ? "Generate a prompt first" : ""}
+    >
+      Give feedback
+    </button>
+  ) : (
+    <div className="border rounded-md p-3 space-y-2">
+      <textarea
+        placeholder="Your feedback..."
+        value={feedbackText}
+        onChange={(e) => setFeedbackText(e.target.value)}
+        className="w-full border rounded-md p-2"
+      />
+      <div className="flex space-x-2">
+        {[1, 2, 3, 4, 5].map((star) => (
           <button
+            key={star}
             type="button"
-            onClick={handleSave}
-            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-            disabled={!generatedPrompt}
-            title={!generatedPrompt ? "Generate a prompt first" : ""}
+            onClick={() => setRating(star)}
+            className={`px-2 py-1 border rounded-md ${
+              rating === star ? "bg-gray-200 font-bold" : ""
+            }`}
           >
-            Save
+            {star}
           </button>
-
-          {/* Share */}
-          <button
-            type="button"
-            onClick={handleShare}
-            className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-            disabled={!generatedPrompt}
-            title={!generatedPrompt ? "Generate a prompt first" : ""}
-          >
-            Share
-          </button>
-
-          {/* Feedback */}
-          {!feedbackOpen ? (
-            <button
-              type="button"
-              onClick={() => setFeedbackOpen(true)}
-              className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-              disabled={!generatedPrompt}
-              title={!generatedPrompt ? "Generate a prompt first" : ""}
-            >
-              Give feedback
-            </button>
-          ) : (
-            <div className="border rounded-md p-3 space-y-2">
-              <textarea
-                placeholder="Your feedback..."
-                value={feedbackText}
-                onChange={(e) => setFeedbackText(e.target.value)}
-                className="w-full border rounded-md p-2"
-              />
-              <div className="flex space-x-2">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onClick={() => setRating(star)}
-                    className={`px-2 py-1 border rounded-md ${
-                      rating === star ? "bg-gray-200 font-bold" : ""
-                    }`}
-                  >
-                    {star}
-                  </button>
-                ))}
-              </div>
-              <div className="flex space-x-2">
-                <button
-                  type="button"
-                  onClick={handleFeedback}
-                  className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-                >
-                  Submit Feedback
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFeedbackOpen(false);
-                    setFeedbackText("");
-                    setRating(0);
-                  }}
-                  className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </form>
+        ))}
+      </div>
+      <div className="flex space-x-2">
+        <button
+          type="button"
+          onClick={handleFeedback}   // ✅ now exists
+          className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+        >
+          Submit Feedback
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setFeedbackOpen(false);
+            setFeedbackText("");
+            setRating(0);
+          }}
+          className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )}
+</div>
+</form>
 
       {/* Generated prompt output */}
       {generatedPrompt && (
