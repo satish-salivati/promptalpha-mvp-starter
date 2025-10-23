@@ -304,12 +304,6 @@ export default function Page() {
           </div>
         </details>
 
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="submit"
-            className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
-          >
 {/* Actions */}
 <div className="flex flex-wrap items-center gap-3">
   <button
