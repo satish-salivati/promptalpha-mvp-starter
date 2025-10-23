@@ -75,6 +75,13 @@ export const LLMS = [
   { value: "Local (OpenAI-compatible)", help: "Custom endpoint via env" },
 ];
 
+// NEW: Depth options for controlling output length/detail
+export const DEPTH = [
+  { value: "Brief", help: "Summary, 2–3 paragraphs" },
+  { value: "Standard", help: "Balanced detail, 5–7 paragraphs" },
+  { value: "Deep Dive", help: "Exhaustive, multi-section, long-form" },
+];
+
 // Helper to allow free-text override in UI (used for micro-guide hints)
 export const HINTS = {
   role: "Role: e.g., Expert marketer, Research assistant, UX designer",
@@ -83,5 +90,5 @@ export const HINTS = {
   format: "Format: e.g., Paragraph, Bullet list, Table",
   audience: "Audience: e.g., Executives, Developers, General public",
   structure: "Structure: e.g., Narrative, Bullet, Table, FAQ",
+  depth: "Depth: e.g., Brief, Standard, Deep Dive", // NEW
 };
-
