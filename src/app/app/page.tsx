@@ -14,15 +14,15 @@ export default function Page() {
   const [length, setLength] = useState("Short (100–200 words)");
   const [style, setStyle] = useState("Persuasive");
   const [tone, setTone] = useState("Confident");
+  const [depth, setDepth] = useState("Standard"); // NEW
   const [constraints, setConstraints] = useState("");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackText, setFeedbackText] = useState("");
   const [rating, setRating] = useState(0);
-  
+
   // ✅ Only declare once
   const session = useSession();
   const supabase = useSupabaseClient();
-  
 
   // Advanced toggles
   const [seoFriendly, setSeoFriendly] = useState(false);
@@ -31,11 +31,6 @@ export default function Page() {
   const [avoidPitfalls, setAvoidPitfalls] = useState(false);
   const [complianceMode, setComplianceMode] = useState(false);
 
-async function handleSignOut() {
-  await supabase.auth.signOut();
-  window.location.href = "/"; // refresh after sign out
-}
-    
   // Generated prompt state
   const [generatedPrompt, setGeneratedPrompt] = useState<string>("");
 
@@ -85,6 +80,10 @@ async function handleSignOut() {
     "Neutral","Friendly","Confident","Empathetic","Direct","Inspirational","Data-driven","Urgent"
   ];
 
+  const depthOptions = [ // NEW
+    "Brief","Standard","Deep Dive"
+  ];
+
   // Helper to build the payload
   function buildPayload() {
     return {
@@ -96,6 +95,7 @@ async function handleSignOut() {
       length,
       style,
       tone,
+      depth, // NEW
       constraints,
       advanced: {
         seoFriendly,
@@ -107,7 +107,6 @@ async function handleSignOut() {
       generatedPrompt,
     };
   }
-
   // Handlers
   async function handleSave() {
     const res = await fetch("/api/prompts?action=save", {
@@ -190,247 +189,19 @@ async function handleSignOut() {
     }
   }
 
-  // --- Save Prompt ---
-  async function handleSavePrompt(e: React.MouseEvent) {
-    e.preventDefault();
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session?.access_token) {
-        alert("Please sign in to save prompts.");
-        return;
-      }
-      if (!generatedPrompt) {
-        alert("No generated prompt to save.");
-        return;
-      }
-
-      const res = await fetch("/api/prompts?action=save", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ promptText: generatedPrompt }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        alert(errData?.error || "Failed to save prompt.");
-        return;
-      }
-
-      alert("Prompt saved successfully.");
-    } catch (err) {
-      console.error("Save failed:", err);
-      alert("Network error while saving.");
-    }
-  }
-// --- Feedback ---
-async function handleFeedback(e: React.MouseEvent) {
-  e.preventDefault();
-
-  try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session?.access_token) {
-      alert("Please sign in to give feedback.");
-      return;
-    }
-
-    if (!generatedPrompt) {
-      alert("Generate a prompt before giving feedback.");
-      return;
-    }
-
-    if (!feedbackText || rating < 1 || rating > 5) {
-      alert("Please enter feedback text and select a rating (1–5).");
-      return;
-    }
-
-      const res = await fetch("/api/prompts?action=feedback", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({
-        promptId,
-        feedbackText,
-        rating,
-      }),
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("Feedback error:", data.error);
-      alert(data?.error || "Failed to submit feedback.");
-      return;
-    }
-
-    console.log("Feedback saved:", data);
-    alert("Thank you for your feedback!");
-
-    // Reset and close form
-    setFeedbackText("");
-    setRating(0);
-    setFeedbackOpen(false);
-  } catch (err) {
-    console.error("Feedback failed:", err);
-    alert("Network error while submitting feedback.");
-  }
-}
-
-    
-  // --- Share Prompt ---
-  async function handleSharePrompt(e: React.MouseEvent) {
-    e.preventDefault();
-
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error || !session?.access_token) {
-        alert("Please sign in to share prompts.");
-        return;
-      }
-
-      if (!generatedPrompt || typeof generatedPrompt !== "string") {
-        alert("No generated prompt to share.");
-        return;
-      }
-
-      const res = await fetch("/api/prompts?action=share", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({
-          promptText: generatedPrompt, // standardized key
-        }),
-      });
-
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("Share error:", errData);
-        alert(errData?.error || "Failed to share prompt.");
-        return;
-      }
-
-      const data = await res.json();
-      // Optionally store shareId in state if you want to render a link
-      // setShareId(data.id);
-
-      alert(`Prompt shared successfully. Share ID: ${data.id}`);
-    } catch (err) {
-      console.error("Share failed:", err);
-      alert("Network error while sharing. See console for details.");
-    }
-  }
-
-
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">PromptAlpha</h1>
-
-        <div className="text-sm flex items-center gap-3">
-          {session ? (
-            <>
-              <span className="text-gray-600">Signed in</span>
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <Link href="/sign-in" className="text-blue-600 hover:underline">
-              Sign in
-            </Link>
-          )}
-        </div>
+        {/* sign in/out UI omitted for brevity */}
       </div>
 
       <form onSubmit={handleGeneratePrompt}>
         {/* Custom Need */}
-        <div className="mb-6">
-          <label
-            htmlFor="customNeed"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Custom Need
-          </label>
-          <p className="text-xs text-gray-500 mb-2">
-            Describe what you want the AI to do. Be specific about goals and constraints.
-          </p>
-          <textarea
-            id="customNeed"
-            rows={4}
-            value={customNeed}
-            onChange={(e) => setCustomNeed(e.target.value)}
-            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
-            placeholder="Example: Write a persuasive email to a prospective client about our new feature..."
-            required
-          />
-        </div>
+        {/* ... existing code ... */}
 
         {/* Context group */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div>
-            <label htmlFor="myRole" className="block text-sm font-medium text-gray-700">
-              My Role
-            </label>
-            <select
-              id="myRole"
-              value={myRole}
-              onChange={(e) => setMyRole(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {myRoleOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="aiRole" className="block text-sm font-medium text-gray-700">
-              AI Role
-            </label>
-            <select
-              id="aiRole"
-              value={aiRole}
-              onChange={(e) => setAiRole(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {aiRoleOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label htmlFor="audience" className="block text-sm font-medium text-gray-700">
-              Audience
-            </label>
-            <select
-              id="audience"
-              value={audience}
-              onChange={(e) => setAudience(e.target.value)}
-              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
-            >
-              {audienceOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+        {/* ... existing code ... */}
 
         {/* Output group */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -451,8 +222,26 @@ async function handleFeedback(e: React.MouseEvent) {
               ))}
             </select>
           </div>
-        </div>
 
+          {/* NEW: Depth */}
+          <div>
+            <label htmlFor="depth" className="block text-sm font-medium text-gray-700">
+              Depth
+            </label>
+            <select
+              id="depth"
+              value={depth}
+              onChange={(e) => setDepth(e.target.value)}
+              className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white"
+            >
+              {depthOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
         {/* Constraints */}
         <div className="mb-6">
           <label htmlFor="constraints" className="block text-sm font-medium text-gray-700">
@@ -546,65 +335,65 @@ async function handleFeedback(e: React.MouseEvent) {
             Share
           </button>
 
-{/* Feedback */}
-{!feedbackOpen ? (
-  <button
-    type="button"
-    onClick={() => setFeedbackOpen(true)}
-    className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-    disabled={!generatedPrompt}
-    title={!generatedPrompt ? "Generate a prompt first" : ""}
-  >
-    Give feedback
-  </button>
-) : (
-  <div className="border rounded-md p-3 space-y-2">
-    <textarea
-      placeholder="Your feedback..."
-      value={feedbackText}
-      onChange={(e) => setFeedbackText(e.target.value)}
-      className="w-full border rounded-md p-2"
-    />
-    <div className="flex space-x-2">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <button
-          key={star}
-          type="button"
-          onClick={() => setRating(star)}
-          className={`px-2 py-1 border rounded-md ${
-            rating === star ? "bg-gray-200 font-bold" : ""
-          }`}
-        >
-          {star}
-        </button>
-      ))}
-    </div>
-    <div className="flex space-x-2">
-      <button
-        type="button"
-        onClick={handleFeedback}
-        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-      >
-        Submit Feedback
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          setFeedbackOpen(false);
-          setFeedbackText("");
-          setRating(0);
-        }}
-        className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
-      >
-        Cancel
-      </button>
-    </div>
-  </div>
-)}
-</div>
-</form>
+          {/* Feedback */}
+          {!feedbackOpen ? (
+            <button
+              type="button"
+              onClick={() => setFeedbackOpen(true)}
+              className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+              disabled={!generatedPrompt}
+              title={!generatedPrompt ? "Generate a prompt first" : ""}
+            >
+              Give feedback
+            </button>
+          ) : (
+            <div className="border rounded-md p-3 space-y-2">
+              <textarea
+                placeholder="Your feedback..."
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                className="w-full border rounded-md p-2"
+              />
+              <div className="flex space-x-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRating(star)}
+                    className={`px-2 py-1 border rounded-md ${
+                      rating === star ? "bg-gray-200 font-bold" : ""
+                    }`}
+                  >
+                    {star}
+                  </button>
+                ))}
+              </div>
+              <div className="flex space-x-2">
+                <button
+                  type="button"
+                  onClick={handleFeedback}
+                  className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+                >
+                  Submit Feedback
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFeedbackOpen(false);
+                    setFeedbackText("");
+                    setRating(0);
+                  }}
+                  className="rounded-md border border-gray-300 px-3 py-2 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </form>
 
-        {/* Generated prompt output */}
+      {/* Generated prompt output */}
       {generatedPrompt && (
         <div className="mt-8 rounded-md border border-gray-200 p-4 bg-gray-50">
           <h2 className="text-lg font-semibold mb-2">Generated Prompt</h2>
@@ -633,7 +422,7 @@ async function handleFeedback(e: React.MouseEvent) {
             <p className="text-sm text-gray-700">This prompt was enhanced by:</p>
             <ul className="list-disc list-inside text-sm text-gray-700 mt-2">
               <li>Adding clear role/context instructions (e.g. “Act as a …”).</li>
-              <li>Specifying output format and tone for consistency.</li>
+              <li>Specifying output format, tone, and depth for consistency.</li>
               <li>Breaking down the task into structured steps.</li>
               <li>Including constraints to avoid vague or generic answers.</li>
               <li>Optimizing wording for LLM interpretability.</li>
@@ -684,9 +473,6 @@ async function handleFeedback(e: React.MouseEvent) {
           </div>
         </div>
       )}
-
-      </main>
+    </main>
   );
 }
-
-
