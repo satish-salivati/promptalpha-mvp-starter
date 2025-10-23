@@ -153,6 +153,60 @@ export default function Page() {
     a.click();
     URL.revokeObjectURL(url);
   }
+// --- Feedback ---
+async function handleFeedback(e: React.MouseEvent) {
+  e.preventDefault();
+
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.access_token) {
+      alert("Please sign in to give feedback.");
+      return;
+    }
+
+    if (!generatedPrompt) {
+      alert("Generate a prompt before giving feedback.");
+      return;
+    }
+
+    if (!feedbackText || rating < 1 || rating > 5) {
+      alert("Please enter feedback text and select a rating (1–5).");
+      return;
+    }
+
+    const res = await fetch("/api/prompts?action=feedback", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        promptId,
+        feedbackText,
+        rating,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error("Feedback error:", data.error);
+      alert(data?.error || "Failed to submit feedback.");
+      return;
+    }
+
+    console.log("Feedback saved:", data);
+    alert("Thank you for your feedback!");
+
+    // Reset and close form
+    setFeedbackText("");
+    setRating(0);
+    setFeedbackOpen(false);
+  } catch (err) {
+    console.error("Feedback failed:", err);
+    alert("Network error while submitting feedback.");
+  }
+}
 
   // --- Generate Prompt ---
   async function handleGeneratePrompt(e: React.FormEvent) {
