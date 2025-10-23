@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export default function LandingPage() {
   return (
     <main className="min-h-screen flex flex-col bg-white text-gray-900">
@@ -10,12 +12,12 @@ export default function LandingPage() {
           PromptAlpha helps professionals across industries save time, cut costs,
           and get consistently better results from AI.
         </p>
-        <a
+        <Link
           href="/app"
           className="px-6 py-3 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700"
         >
           Start Generating
-        </a>
+        </Link>
       </section>
 
       {/* Problem */}
@@ -104,7 +106,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
       {/* Differentiators */}
       <section className="py-16 text-center px-6">
         <h2 className="text-3xl font-bold mb-12">What Sets PromptAlpha Apart</h2>
@@ -131,12 +132,12 @@ export default function LandingPage() {
       {/* Final CTA */}
       <section className="bg-indigo-600 text-white text-center py-20 px-6">
         <h2 className="text-3xl font-bold mb-6">Ready to transform your AI workflow?</h2>
-        <a
+        <Link
           href="/app"
           className="px-6 py-3 bg-white text-indigo-600 font-semibold rounded-lg shadow hover:bg-gray-100"
         >
           Try PromptAlpha Now
-        </a>
+        </Link>
       </section>
 
       {/* Footer */}
@@ -154,9 +155,9 @@ export default function LandingPage() {
           <div>
             <h4 className="font-semibold text-white mb-3">Product</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="/app" className="hover:text-white">Start Generating</a></li>
-              <li><a href="/landing" className="hover:text-white">Landing Page</a></li>
-              <li><a href="#" className="hover:text-white">Pricing (coming soon)</a></li>
+              <li><Link href="/app" className="hover:text-white">Start Generating</Link></li>
+              <li><Link href="/landing" className="hover:text-white">Landing Page</Link></li>
+              <li><Link href="/pricing" className="hover:text-white">Pricing</Link></li>
             </ul>
           </div>
 
@@ -164,9 +165,9 @@ export default function LandingPage() {
           <div>
             <h4 className="font-semibold text-white mb-3">Company</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="/about" className="hover:text-white">About</a></li>
-              <li><a href="#" className="hover:text-white">Blog</a></li>
-              <li><a href="#" className="hover:text-white">Careers</a></li>
+              <li><Link href="/about" className="hover:text-white">About</Link></li>
+              <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
+              <li><Link href="/careers" className="hover:text-white">Careers</Link></li>
             </ul>
           </div>
 
