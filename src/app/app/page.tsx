@@ -109,32 +109,74 @@ export default function Page() {
   }
 
   // Handlers
-  async function handleSave() {
+  // --- Save ---
+async function handleSave() {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.access_token) {
+      alert("Please sign in to save.");
+      return;
+    }
+
     const res = await fetch("/api/prompts?action=save", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify(buildPayload()),
     });
-    const data = res.ok ? await res.json() : null;
-    if (data?.id) setPromptId(data.id);
-    alert(res.ok ? "Saved!" : "Save failed.");
-  }
 
-  async function handleShare() {
+    const data = res.ok ? await res.json() : await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data?.error || "Save failed.");
+      return;
+    }
+
+    if (data?.id) setPromptId(data.id);
+    alert("Saved!");
+  } catch (err) {
+    console.error("Save failed:", err);
+    alert("Network error while saving.");
+  }
+}
+
+// --- Share ---
+async function handleShare() {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.access_token) {
+      alert("Please sign in to share.");
+      return;
+    }
+
     const res = await fetch("/api/prompts?action=share", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
       body: JSON.stringify(buildPayload()),
     });
-    const data = res.ok ? await res.json() : null;
+
+    const data = res.ok ? await res.json() : await res.json().catch(() => ({}));
+    if (!res.ok) {
+      alert(data?.error || "Share failed.");
+      return;
+    }
+
     if (data?.id) setPromptId(data.id);
     if (data?.url) {
       await navigator.clipboard.writeText(data.url).catch(() => {});
       alert("Share link copied to clipboard!");
     } else {
-      alert("Share failed.");
+      alert("Share succeeded but no URL returned.");
     }
+  } catch (err) {
+    console.error("Share failed:", err);
+    alert("Network error while sharing.");
   }
+}
 
   function handleCopyPrompt() {
     if (!generatedPrompt) return;
