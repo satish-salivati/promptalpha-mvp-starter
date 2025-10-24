@@ -28,8 +28,8 @@ export async function POST(req: Request) {
     const userId = user.id;
 
     // 2) Parse body and action
-    const url = new URL(req.url);
-    const queryAction = url.searchParams.get("action") || "";
+    const urlObj = new URL(req.url);
+    const queryAction = urlObj.searchParams.get("action") || "";
     const rawBody = await req.json().catch(() => ({} as any));
     const bodyAction = rawBody?.action ?? rawBody?.body?.action ?? "";
     const action = (queryAction || bodyAction || "").toLowerCase();
@@ -131,7 +131,11 @@ export async function POST(req: Request) {
         console.error("Insert error (shared_prompts):", error.message);
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
-      return NextResponse.json({ ok: true, id: data.id });
+
+      // Build a shareable URL using your deployed domain
+      const url = `https://promptalpha-mvp-starter.vercel.app/app/share/${data.id}`;
+
+      return NextResponse.json({ ok: true, id: data.id, url });
     }
 
     // Feedback
