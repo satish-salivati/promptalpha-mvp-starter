@@ -175,7 +175,7 @@ export default function LandingPage() {
           <div>
             <h4 className="font-semibold text-white mb-3">Connect</h4>
             <ul className="space-y-2 text-sm">
-              <li><a href="mailto:hello@promptalpha.com" className="hover:text-white">hello@promptalpha.com</a></li>
+              <li><a href="mailto:hello@promptalpha.com" className="hover:text-white">hello@promptalpha.co</a></li>
               <li><a href="https://linkedin.com/company/promptalpha" target="_blank" className="hover:text-white">LinkedIn</a></li>
               <li><a href="https://twitter.com/promptalpha" target="_blank" className="hover:text-white">X (Twitter)</a></li>
             </ul>
