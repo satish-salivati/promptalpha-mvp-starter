@@ -23,6 +23,27 @@ export default function Page() {
   // ✅ Only declare once
   const session = useSession();
   const supabase = useSupabaseClient();
+  // If user is not signed in, show a clear path to sign in
+  if (!session) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-semibold">PromptAlpha</h1>
+        </div>
+        <div className="rounded-md border border-gray-200 p-4 bg-gray-50">
+          <h2 className="text-lg font-semibold mb-2">You’re not signed in</h2>
+          <p className="text-sm text-gray-700">
+            Please{" "}
+            <Link href="/sign-in" className="underline text-blue-600">
+              sign in
+            </Link>{" "}
+            to continue.
+          </p>
+        </div>
+      </main>
+    );
+  }
+  
 
   // Advanced toggles
   const [seoFriendly, setSeoFriendly] = useState(false);
