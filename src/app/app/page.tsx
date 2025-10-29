@@ -310,6 +310,16 @@ async function handleShare() {
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-semibold">PromptAlpha</h1>
+                  {/* Show login status */}
+        {session ? (
+          <p className="text-sm text-green-600">
+            ✅ Signed in as {session.user?.email}
+          </p>
+        ) : (
+          <p className="text-sm text-red-600">
+            ❌ Not signed in — please <Link href="/sign-in" className="underline">sign in</Link>
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleGeneratePrompt}>
