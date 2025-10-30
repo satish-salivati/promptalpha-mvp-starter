@@ -32,13 +32,18 @@ export default function SignInPage() {
   return (
     <main className="mx-auto max-w-md px-4 py-8">
       <h1 className="text-2xl font-semibold mb-6">Sign in</h1>
+      <h2 className="text-lg font-medium mb-4">
+        Use your email to receive a magic link
+      </h2>
+
       <Auth
         supabaseClient={supabase}
         appearance={{ theme: ThemeSupa }}
         providers={[]} // no social providers yet
-        view="magic_link" // 👈 switch to magic link flow
+        view="magic_link" // 👈 forces passwordless flow
         redirectTo="https://promptalpha-mvp-starter.vercel.app"
       />
+
       <p className="mt-4 text-sm text-gray-600">
         Enter your email and click the link we send you to sign in.
       </p>
